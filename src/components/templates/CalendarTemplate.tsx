@@ -68,7 +68,7 @@ const CalendarTemplate: React.FC = () => {
   };
 
   const getEventsForDate = (date: string) => {
-    return calendarEvents.filter((event) => event.date === date);
+    return calendarEvents.filter(event => event.date === date);
   };
 
   const handleDateClick = (day: number) => {
@@ -128,11 +128,11 @@ const CalendarTemplate: React.FC = () => {
             {day}
           </div>
           <div className="space-y-1">
-            {events.slice(0, 2).map((event) => (
+            {events.slice(0, 2).map(event => (
               <div
                 key={event.id}
                 className={`text-xs p-1 rounded text-white truncate ${event.color}`}
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation();
                   handleEditEvent(event);
                 }}
@@ -231,7 +231,7 @@ const CalendarTemplate: React.FC = () => {
         {viewMode === "month" && (
           <div className="grid grid-cols-7 gap-px bg-border rounded-lg overflow-hidden">
             {/* Day headers */}
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(day => (
               <div
                 key={day}
                 className="bg-muted p-3 text-center text-sm font-medium text-muted-foreground"
@@ -264,7 +264,7 @@ const CalendarTemplate: React.FC = () => {
         selectedDate={selectedDate}
         tagColors={tagColors}
         open={showAddModal}
-        onOpenChange={(open) => {
+        onOpenChange={open => {
           setShowAddModal(open);
           if (!open) {
             setEditingEvent(null);
@@ -317,16 +317,14 @@ const EventModal: React.FC<{
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full max-w-md">
         <DialogHeader>
-          <DialogTitle>
-            {event ? "Edit Event" : "Add New Event"}
-          </DialogTitle>
+          <DialogTitle>{event ? "Edit Event" : "Add New Event"}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -361,7 +359,7 @@ const EventModal: React.FC<{
               <DatePicker
                 label="Date"
                 date={formData.date ? new Date(formData.date) : undefined}
-                onChange={(date) => {
+                onChange={date => {
                   const dateString = date.toISOString().split("T")[0];
                   setFormData(prev => ({ ...prev, date: dateString }));
                 }}
@@ -386,8 +384,8 @@ const EventModal: React.FC<{
             </label>
             <Select
               value={formData.tag}
-              onValueChange={(value) => {
-                const selectedTag = tagColors.find((t) => t.name === value);
+              onValueChange={value => {
+                const selectedTag = tagColors.find(t => t.name === value);
                 setFormData(prev => ({
                   ...prev,
                   tag: value,
@@ -399,7 +397,7 @@ const EventModal: React.FC<{
                 <SelectValue placeholder="Select a tag" />
               </SelectTrigger>
               <SelectContent>
-                {tagColors.map((tag) => (
+                {tagColors.map(tag => (
                   <SelectItem key={tag.name} value={tag.name}>
                     <div className="flex items-center gap-2">
                       <div className={`w-3 h-3 rounded-full ${tag.color}`} />
@@ -423,7 +421,11 @@ const EventModal: React.FC<{
               </Button>
             )}
             <div className="flex space-x-3 ml-auto">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
                 Cancel
               </Button>
               <Button type="submit">{event ? "Update" : "Add"} Event</Button>

@@ -91,7 +91,7 @@ const BlockEditor: React.FC<BlockEditorProps> = ({ pageId }) => {
     blockId: string,
     parentBlockId?: string
   ) => {
-    const block = blocks.find((b) => b.id === blockId);
+    const block = blocks.find(b => b.id === blockId);
     if (!block) return;
 
     switch (e.key) {
@@ -118,10 +118,10 @@ const BlockEditor: React.FC<BlockEditorProps> = ({ pageId }) => {
         if (block.content === "") {
           e.preventDefault();
           const allBlocks = parentBlockId
-            ? blocks.filter((b) => b.parentBlockId === parentBlockId)
-            : blocks.filter((b) => !b.parentBlockId);
+            ? blocks.filter(b => b.parentBlockId === parentBlockId)
+            : blocks.filter(b => !b.parentBlockId);
 
-          const blockIndex = allBlocks.findIndex((b) => b.id === blockId);
+          const blockIndex = allBlocks.findIndex(b => b.id === blockId);
           if (blockIndex > 0) {
             const prevBlock = allBlocks[blockIndex - 1];
             await deleteBlock(blockId);
@@ -141,7 +141,7 @@ const BlockEditor: React.FC<BlockEditorProps> = ({ pageId }) => {
       case "ArrowUp":
         if (showSlashMenu) {
           e.preventDefault();
-          setSelectedSlashIndex((prev) =>
+          setSelectedSlashIndex(prev =>
             prev > 0 ? prev - 1 : blockTypes.length - 1
           );
         }
@@ -150,7 +150,7 @@ const BlockEditor: React.FC<BlockEditorProps> = ({ pageId }) => {
       case "ArrowDown":
         if (showSlashMenu) {
           e.preventDefault();
-          setSelectedSlashIndex((prev) =>
+          setSelectedSlashIndex(prev =>
             prev < blockTypes.length - 1 ? prev + 1 : 0
           );
         }
@@ -168,7 +168,7 @@ const BlockEditor: React.FC<BlockEditorProps> = ({ pageId }) => {
 
   const handleSlashMenuSelect = (blockType: BlockType) => {
     if (focusedBlockId) {
-      const block = blocks.find((b) => b.id === focusedBlockId);
+      const block = blocks.find(b => b.id === focusedBlockId);
       if (block) {
         const updates: Partial<Block> = {
           type: blockType.type,
@@ -203,13 +203,13 @@ const BlockEditor: React.FC<BlockEditorProps> = ({ pageId }) => {
   return (
     <div ref={editorRef} className="relative">
       <div className="space-y-2">
-        {blocks.map((block) => (
+        {blocks.map(block => (
           <EditableBlock
             key={block.id}
             block={block}
             onContentChange={handleBlockContentChange}
             onKeyDown={handleKeyDown}
-            onUpdateBlock={(updates) => updateBlock(block.id, updates)}
+            onUpdateBlock={updates => updateBlock(block.id, updates)}
           />
         ))}
       </div>

@@ -10,6 +10,8 @@ import {
   SidebarInset,
   SidebarTrigger,
 } from "./components/ui/sidebar";
+import { ThemeProvider } from "./context/ThemeContext";
+import { ModeToggle } from "./components/ui/mode-toggle";
 
 const AppContent: React.FC = () => {
   const { isLoading, session } = useApp();
@@ -40,8 +42,9 @@ const AppContent: React.FC = () => {
     <SidebarProvider defaultOpen={true}>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+        <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
+          <ModeToggle />
         </header>
         <MainContent />
       </SidebarInset>
@@ -52,10 +55,12 @@ const AppContent: React.FC = () => {
 const App: React.FC = () => {
   return (
     <AppProvider>
-      <Routes>
-        <Route path="/login" element={<AuthComponent />} />
-        <Route path="/*" element={<AppContent />} />
-      </Routes>
+      <ThemeProvider defaultTheme="system" storageKey="worknest-theme">
+        <Routes>
+          <Route path="/login" element={<AuthComponent />} />
+          <Route path="/*" element={<AppContent />} />
+        </Routes>
+      </ThemeProvider>
     </AppProvider>
   );
 };

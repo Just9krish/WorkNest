@@ -29,13 +29,13 @@ const RoadmapTemplate: React.FC = () => {
 
   // Calculate statistics
   const completedTasks = roadmapTasks.filter(
-    (task) => task.status === "Completed"
+    task => task.status === "Completed"
   ).length;
   const inProgressTasks = roadmapTasks.filter(
-    (task) => task.status === "In Progress"
+    task => task.status === "In Progress"
   ).length;
   const notStartedTasks = roadmapTasks.filter(
-    (task) => task.status === "Not Started"
+    task => task.status === "Not Started"
   ).length;
   const overallProgress =
     roadmapTasks.length > 0
@@ -144,7 +144,7 @@ const RoadmapTemplate: React.FC = () => {
 
         {/* Task Cards */}
         <div className="space-y-4">
-          {roadmapTasks.map((task) => (
+          {roadmapTasks.map(task => (
             <Card key={task.id} className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
@@ -196,7 +196,7 @@ const RoadmapTemplate: React.FC = () => {
                     min="0"
                     max="100"
                     value={task.progress}
-                    onChange={(e) =>
+                    onChange={e =>
                       handleProgressChange(task.id, parseInt(e.target.value))
                     }
                     className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer slider"
@@ -211,7 +211,7 @@ const RoadmapTemplate: React.FC = () => {
               <div className="flex items-center justify-between">
                 <Select
                   value={task.status}
-                  onValueChange={(value) =>
+                  onValueChange={value =>
                     handleStatusChange(task.id, value as RoadmapTask["status"])
                   }
                 >
@@ -265,7 +265,7 @@ const AddMilestoneModal: React.FC<{
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   return (
@@ -308,8 +308,8 @@ const AddMilestoneModal: React.FC<{
             </label>
             <Select
               value={formData.category}
-              onValueChange={(value) => {
-                setFormData((prev) => ({
+              onValueChange={value => {
+                setFormData(prev => ({
                   ...prev,
                   category: value as RoadmapTask["category"],
                 }));
@@ -348,9 +348,9 @@ const AddMilestoneModal: React.FC<{
                 date={
                   formData.startDate ? new Date(formData.startDate) : undefined
                 }
-                onChange={(date) => {
+                onChange={date => {
                   const dateString = date.toISOString().split("T")[0];
-                  setFormData((prev) => ({ ...prev, startDate: dateString }));
+                  setFormData(prev => ({ ...prev, startDate: dateString }));
                 }}
               />
             </div>
@@ -358,9 +358,9 @@ const AddMilestoneModal: React.FC<{
               <DatePicker
                 label="End Date"
                 date={formData.endDate ? new Date(formData.endDate) : undefined}
-                onChange={(date) => {
+                onChange={date => {
                   const dateString = date.toISOString().split("T")[0];
-                  setFormData((prev) => ({ ...prev, endDate: dateString }));
+                  setFormData(prev => ({ ...prev, endDate: dateString }));
                 }}
               />
             </div>

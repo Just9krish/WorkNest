@@ -28,7 +28,7 @@ const MainContent: React.FC = () => {
   );
 
   if (selectedTemplateId) {
-    const selectedTemplate = templates.find((t) => t.id === selectedTemplateId);
+    const selectedTemplate = templates.find(t => t.id === selectedTemplateId);
 
     if (selectedTemplate?.type === "roadmap") {
       return <RoadmapTemplate />;
@@ -37,7 +37,7 @@ const MainContent: React.FC = () => {
     }
   }
 
-  const selectedPage = pages.find((page) => page.id === selectedPageId);
+  const selectedPage = pages.find(page => page.id === selectedPageId);
 
   if (!selectedPage) {
     return (
@@ -71,7 +71,7 @@ const MainContent: React.FC = () => {
         <div className="relative mb-4">
           <Button
             ref={iconButtonRef}
-            onClick={() => setIsIconPickerOpen((prev) => !prev)}
+            onClick={() => setIsIconPickerOpen(prev => !prev)}
             variant="ghost"
             className="hover:bg-muted rounded-lg p-2 transition-colors"
           >

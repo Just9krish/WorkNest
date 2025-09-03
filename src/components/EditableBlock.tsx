@@ -63,7 +63,7 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (event) => {
+      reader.onload = event => {
         const src = event.target?.result as string;
         onUpdateBlock({ src });
       };
@@ -290,7 +290,7 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
 
         {block.isExpanded && (
           <div className="ml-6 space-y-2">
-            {childBlocks.map((childBlock) => (
+            {childBlocks.map(childBlock => (
               <EditableBlock
                 key={childBlock.id}
                 block={childBlock}
@@ -339,7 +339,7 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
             onChange={handleChange}
             className="text-xs px-2 py-1 border border-input rounded bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           >
-            {languages.map((lang) => (
+            {languages.map(lang => (
               <option key={lang.value} value={lang.value}>
                 {lang.label}
               </option>

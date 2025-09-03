@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { Plus, FileText, LogOut } from 'lucide-react';
-import { useApp } from '../context/AppContext';
-import { Page } from '../types';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { Plus, FileText, LogOut } from "lucide-react";
+import { useApp } from "../context/AppContext";
+import { Page } from "../types";
+import { useNavigate } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
@@ -18,29 +18,29 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   useSidebar,
-} from './ui/sidebar';
+} from "./ui/sidebar";
 
 const AppSidebar: React.FC = () => {
-  const { 
-    workspace, 
-    pages, 
-    templates, 
-    selectedPageId, 
+  const {
+    workspace,
+    pages,
+    templates,
+    selectedPageId,
     selectedTemplateId,
     updatePage,
     addPage,
-    selectPage, 
+    selectPage,
     selectTemplate,
-    signOut
+    signOut,
   } = useApp();
-  
+
   const navigate = useNavigate();
   const [editingPageId, setEditingPageId] = useState<string | null>(null);
-  const [editingPageTitle, setEditingPageTitle] = useState('');
+  const [editingPageTitle, setEditingPageTitle] = useState("");
   const { state } = useSidebar();
 
   const handlePageTitleEdit = (page: Page) => {
-    if (state !== 'collapsed') {
+    if (state !== "collapsed") {
       setEditingPageId(page.id);
       setEditingPageTitle(page.title);
     }
@@ -51,21 +51,21 @@ const AppSidebar: React.FC = () => {
       updatePage(editingPageId, { title: editingPageTitle.trim() });
     }
     setEditingPageId(null);
-    setEditingPageTitle('');
+    setEditingPageTitle("");
   };
 
   const handlePageTitleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handlePageTitleSubmit();
-    } else if (e.key === 'Escape') {
+    } else if (e.key === "Escape") {
       setEditingPageId(null);
-      setEditingPageTitle('');
+      setEditingPageTitle("");
     }
   };
 
   const handleSignOut = async () => {
     await signOut();
-    navigate('/login');
+    navigate("/login");
   };
 
   const getChildPages = (parentId: string | null): Page[] => {
@@ -83,7 +83,7 @@ const AppSidebar: React.FC = () => {
     const isExpanded = page.isExpanded;
     const isEditing = editingPageId === page.id;
 
-    if (state === 'collapsed' && level > 0) {
+    if (state === "collapsed" && level > 0) {
       return null;
     }
 
@@ -92,30 +92,30 @@ const AppSidebar: React.FC = () => {
         <SidebarMenuButton
           isActive={isSelected}
           onClick={() => !isEditing && selectPage(page.id)}
-          tooltip={state === 'collapsed' ? page.title : undefined}
+          tooltip={state === "collapsed" ? page.title : undefined}
         >
           {page.icon ? (
             <span className="text-sm">{page.icon}</span>
           ) : (
             <FileText size={14} />
           )}
-          {state !== 'collapsed' && (
+          {state !== "collapsed" && (
             <>
               {isEditing ? (
                 <input
                   type="text"
                   value={editingPageTitle}
-                  onChange={(e) => setEditingPageTitle(e.target.value)}
+                  onChange={e => setEditingPageTitle(e.target.value)}
                   onBlur={handlePageTitleSubmit}
                   onKeyDown={handlePageTitleKeyPress}
                   className="flex-1 px-1 py-0.5 text-sm bg-background border border-border rounded focus:outline-none focus:ring-2 focus:ring-ring text-foreground"
                   autoFocus
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={e => e.stopPropagation()}
                 />
               ) : (
-                <span 
+                <span
                   className="truncate flex-1"
-                  onClick={(e) => {
+                  onClick={e => {
                     e.stopPropagation();
                     handlePageTitleEdit(page);
                   }}
@@ -126,8 +126,8 @@ const AppSidebar: React.FC = () => {
             </>
           )}
         </SidebarMenuButton>
-        
-        {state !== 'collapsed' && hasChildPages && isExpanded && (
+
+        {state !== "collapsed" && hasChildPages && isExpanded && (
           <SidebarMenuSub>
             {children.map(child => (
               <SidebarMenuSubItem key={child.id}>
@@ -159,7 +159,7 @@ const AppSidebar: React.FC = () => {
           <div className="w-7 h-7 bg-gradient-to-br from-primary to-primary/80 rounded-md flex items-center justify-center font-bold text-primary-foreground text-lg shrink-0">
             W
           </div>
-          {state !== 'collapsed' && workspace && (
+          {state !== "collapsed" && workspace && (
             <h1 className="text-lg font-bold text-sidebar-foreground">
               {workspace.name}
             </h1>
@@ -177,10 +177,10 @@ const AppSidebar: React.FC = () => {
                   <SidebarMenuButton
                     isActive={selectedTemplateId === template.id}
                     onClick={() => selectTemplate(template.id)}
-                    tooltip={state === 'collapsed' ? template.name : undefined}
+                    tooltip={state === "collapsed" ? template.name : undefined}
                   >
                     <span className="text-sm">{template.icon}</span>
-                    {state !== 'collapsed' && (
+                    {state !== "collapsed" && (
                       <span className="truncate">{template.name}</span>
                     )}
                   </SidebarMenuButton>
@@ -193,9 +193,7 @@ const AppSidebar: React.FC = () => {
         <SidebarGroup>
           <SidebarGroupLabel>Pages</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
-              {rootPages.map(page => renderPage(page))}
-            </SidebarMenu>
+            <SidebarMenu>{rootPages.map(page => renderPage(page))}</SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
@@ -205,19 +203,19 @@ const AppSidebar: React.FC = () => {
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={() => addPage()}
-              tooltip={state === 'collapsed' ? 'Add Page' : undefined}
+              tooltip={state === "collapsed" ? "Add Page" : undefined}
             >
               <Plus size={16} />
-              {state !== 'collapsed' && 'Add Page'}
+              {state !== "collapsed" && "Add Page"}
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={handleSignOut}
-              tooltip={state === 'collapsed' ? 'Sign Out' : undefined}
+              tooltip={state === "collapsed" ? "Sign Out" : undefined}
             >
               <LogOut size={16} />
-              {state !== 'collapsed' && 'Sign Out'}
+              {state !== "collapsed" && "Sign Out"}
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
