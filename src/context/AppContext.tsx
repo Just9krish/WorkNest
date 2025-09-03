@@ -4,6 +4,7 @@ import React, {
   useState,
   ReactNode,
   useEffect,
+  useCallback,
 } from "react";
 import {
   Page,
@@ -77,7 +78,7 @@ interface AppContextType {
   deletePage: (pageId: string) => Promise<void>;
   selectPage: (pageId: string | null) => void;
   selectTemplate: (templateId: string) => void;
-  togglePageExpansion: (pageId: string) => Promise<void>;
+  togglePageExpansion: (pageId: string) => void;
   updatePage: (
     pageId: string,
     updates: Partial<Omit<Page, "id" | "userId" | "createdAt">>
@@ -92,7 +93,7 @@ interface AppContextType {
   ) => Promise<Block>;
   updateBlock: (blockId: string, updates: Partial<Block>) => Promise<void>;
   deleteBlock: (blockId: string) => Promise<void>;
-  toggleBlockExpansion: (blockId: string) => Promise<void>;
+  toggleBlockExpansion: (blockId: string) => void;
   addRoadmapTask: (
     task: Omit<RoadmapTask, "id" | "userId" | "createdAt">
   ) => Promise<void>;
@@ -307,21 +308,32 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     setSelectedPageId(null);
   };
 
-  const toggleSidebar = () => setIsSidebarCollapsed(prev => !prev);
-  const getPageBlocks = (pageId: string) =>
-    blocks
-      .filter(b => b.pageId === pageId && !b.parentBlockId)
-      .sort(
-        (a, b) =>
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      );
-  const getChildBlocks = (parentBlockId: string) =>
-    blocks
-      .filter(b => b.parentBlockId === parentBlockId)
-      .sort(
-        (a, b) =>
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      );
+  const toggleSidebar = useCallback(
+    () => setIsSidebarCollapsed(prev => !prev),
+    []
+  );
+
+  const getPageBlocks = useCallback(
+    (pageId: string) =>
+      blocks
+        .filter(b => b.pageId === pageId && !b.parentBlockId)
+        .sort(
+          (a, b) =>
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        ),
+    [blocks]
+  );
+
+  const getChildBlocks = useCallback(
+    (parentBlockId: string) =>
+      blocks
+        .filter(b => b.parentBlockId === parentBlockId)
+        .sort(
+          (a, b) =>
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        ),
+    [blocks]
+  );
 
   const addBlock = async (
     pageId: string,
@@ -344,22 +356,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     return blockFromRow(data);
   };
 
-  const updateBlock = async (blockId: string, updates: Partial<Block>) => {
-    const dbUpdates: any = {};
-    if (updates.content !== undefined) dbUpdates.content = updates.content;
-    if (updates.type !== undefined) dbUpdates.type = updates.type;
-    if (updates.checked !== undefined) dbUpdates.checked = updates.checked;
-    if (updates.src !== undefined) dbUpdates.src = updates.src;
-    if (updates.language !== undefined) dbUpdates.language = updates.language;
-    if (updates.isExpanded !== undefined)
-      dbUpdates.is_expanded = updates.isExpanded;
+  const updateBlock = useCallback(
+    async (blockId: string, updates: Partial<Block>) => {
+      const dbUpdates: any = {};
+      if (updates.content !== undefined) dbUpdates.content = updates.content;
+      if (updates.type !== undefined) dbUpdates.type = updates.type;
+      if (updates.checked !== undefined) dbUpdates.checked = updates.checked;
+      if (updates.src !== undefined) dbUpdates.src = updates.src;
+      if (updates.language !== undefined) dbUpdates.language = updates.language;
+      if (updates.isExpanded !== undefined)
+        dbUpdates.is_expanded = updates.isExpanded;
 
-    const { error } = await supabase
-      .from("blocks")
-      .update(dbUpdates)
-      .eq("id", blockId);
-    if (error) console.error("Error updating block:", error);
-  };
+      const { error } = await supabase
+        .from("blocks")
+        .update(dbUpdates)
+        .eq("id", blockId);
+      if (error) console.error("Error updating block:", error);
+    },
+    []
+  );
 
   const deleteBlock = async (blockId: string) => {
     const { error } = await supabase.from("blocks").delete().eq("id", blockId);

@@ -1,9 +1,10 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { ChevronRight, ChevronDown, Upload } from "lucide-react";
 import { Block } from "../types";
 import { useApp } from "../context/AppContext";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { useDebounce } from "../hooks/useDebounce";
 
 interface EditableBlockProps {
   block: Block;
@@ -24,19 +25,48 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
 }) => {
   const { getChildBlocks, toggleBlockExpansion, addBlock } = useApp();
   const [isEditing, setIsEditing] = useState(false);
+  const [localContent, setLocalContent] = useState(block.content);
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isTypingRef = useRef(false);
 
   const childBlocks = block.type === "toggle" ? getChildBlocks(block.id) : [];
+
+  // Sync local content with block content when block changes
+  // But only if user is not actively typing
+  useEffect(() => {
+    if (!isTypingRef.current) {
+      setLocalContent(block.content);
+    }
+  }, [block.content]);
+
+  // Debounced update function using custom hook
+  const debouncedUpdate = useDebounce(
+    useCallback(
+      (content: string) => {
+        onContentChange(block.id, content);
+        // Mark that we're no longer typing after the update
+        isTypingRef.current = false;
+      },
+      [block.id, onContentChange]
+    ),
+    150 // 150ms debounce for better responsiveness
+  );
 
   const handleClick = () => {
     if (block.type !== "divider") {
       setIsEditing(true);
+      // Ensure we start with the current block content
+      setLocalContent(block.content);
     }
   };
 
   const handleBlur = () => {
     setIsEditing(false);
+    // Ensure final update is sent on blur
+    onContentChange(block.id, localContent);
+    // Mark that we're no longer typing
+    isTypingRef.current = false;
   };
 
   const handleChange = (
@@ -47,7 +77,11 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
     if (e.target.name === "language") {
       onUpdateBlock({ language: e.target.value });
     } else {
-      onContentChange(block.id, e.target.value);
+      const newContent = e.target.value;
+      setLocalContent(newContent);
+      // Mark that user is actively typing
+      isTypingRef.current = true;
+      debouncedUpdate(newContent);
     }
   };
 
@@ -95,19 +129,19 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
   }, [isEditing]);
 
   const getPlaceholder = () => {
-    if (block.content === "") {
+    if (localContent === "") {
       return "Type '/' for commands";
     }
     return "";
   };
 
   const renderTextBlock = () => {
-    if (isEditing || block.content === "") {
+    if (isEditing || localContent === "") {
       return (
         <Input
           ref={inputRef as React.RefObject<HTMLInputElement>}
           type="text"
-          value={block.content}
+          value={localContent}
           onChange={handleChange}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
@@ -122,7 +156,7 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
         onClick={handleClick}
         className="w-full text-foreground text-base leading-relaxed cursor-text min-h-6 py-1"
       >
-        {block.content || (
+        {localContent || (
           <span className="text-muted-foreground">Type '/' for commands</span>
         )}
       </div>
@@ -130,12 +164,12 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
   };
 
   const renderHeadingBlock = () => {
-    if (isEditing || block.content === "") {
+    if (isEditing || localContent === "") {
       return (
         <Input
           ref={inputRef as React.RefObject<HTMLInputElement>}
           type="text"
-          value={block.content}
+          value={localContent}
           onChange={handleChange}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
@@ -150,7 +184,7 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
         onClick={handleClick}
         className="w-full text-foreground text-2xl font-bold leading-tight cursor-text min-h-8 py-1"
       >
-        {block.content || (
+        {localContent || (
           <span className="text-muted-foreground text-2xl font-bold">
             Type '/' for commands
           </span>
@@ -169,11 +203,11 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
           className="mt-1 h-4 w-4 rounded border-input text-primary focus:ring-ring"
         />
         <div className="flex-1">
-          {isEditing || block.content === "" ? (
+          {isEditing || localContent === "" ? (
             <Input
               ref={inputRef as React.RefObject<HTMLInputElement>}
               type="text"
-              value={block.content}
+              value={localContent}
               onChange={handleChange}
               onBlur={handleBlur}
               onKeyDown={handleKeyDown}
@@ -193,7 +227,7 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
                   : "text-foreground"
               }`}
             >
-              {block.content || (
+              {localContent || (
                 <span className="text-muted-foreground no-underline">
                   Type '/' for commands
                 </span>
@@ -262,11 +296,11 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
             )}
           </Button>
           <div className="flex-1">
-            {isEditing || block.content === "" ? (
+            {isEditing || localContent === "" ? (
               <Input
                 ref={inputRef as React.RefObject<HTMLInputElement>}
                 type="text"
-                value={block.content}
+                value={localContent}
                 onChange={handleChange}
                 onBlur={handleBlur}
                 onKeyDown={handleKeyDown}
@@ -278,7 +312,7 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
                 onClick={handleClick}
                 className="w-full text-foreground text-base leading-relaxed cursor-text min-h-6 py-1"
               >
-                {block.content || (
+                {localContent || (
                   <span className="text-muted-foreground">
                     Type '/' for commands
                   </span>
@@ -350,14 +384,17 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
         <div className="bg-muted rounded-lg p-4">
           <textarea
             ref={inputRef as React.RefObject<HTMLTextAreaElement>}
-            value={block.content}
+            value={localContent}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
-            onFocus={() => setIsEditing(true)}
+            onFocus={() => {
+              setIsEditing(true);
+              setLocalContent(block.content);
+            }}
             onBlur={handleBlur}
             placeholder="Enter your code here..."
             className="w-full bg-transparent border-none outline-none text-foreground placeholder-muted-foreground text-sm font-mono leading-relaxed resize-none"
-            rows={Math.max(3, block.content.split("\n").length)}
+            rows={Math.max(3, localContent.split("\n").length)}
           />
         </div>
       </div>
@@ -387,7 +424,7 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
     <div
       id={`block-${block.id}`}
       className={`group relative rounded-md transition-colors ${
-        block.type === "divider" ? "" : "px-4 py-2 hover:bg-muted/50"
+        block.type === "divider" ? "" : "hover:bg-muted/50"
       } ${block.parentBlockId ? "ml-4" : ""}`}
     >
       {renderBlock()}
