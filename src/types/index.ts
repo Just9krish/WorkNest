@@ -68,4 +68,5 @@ export type CalendarEvent = {
     time: string | null;
     tag: string;
     color: string;
+    description: string | null;
 };

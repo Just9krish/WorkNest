@@ -10,6 +10,15 @@ import { useApp } from "../../context/AppContext";
 import { CalendarEvent } from "../../types";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import { Textarea } from "../ui/textarea";
+import { DatePicker } from "../ui/date-picker";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 import {
   Dialog,
   DialogContent,
@@ -282,6 +291,7 @@ const EventModal: React.FC<{
     time: event?.time || "09:00",
     tag: event?.tag || "Meeting",
     color: event?.color || "bg-blue-500",
+    description: (event as any)?.description || "",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -304,19 +314,10 @@ const EventModal: React.FC<{
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    if (name === "tag") {
-      const selectedTag = tagColors.find((t) => t.name === value);
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-        color: selectedTag?.color || "bg-blue-500",
-      }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   return (
@@ -342,16 +343,28 @@ const EventModal: React.FC<{
             />
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">
+              Description
+            </label>
+            <Textarea
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              placeholder="Add event description..."
+              className="min-h-20"
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
-                Date
-              </label>
-              <Input
-                type="date"
-                name="date"
-                value={formData.date}
-                onChange={handleChange}
+              <DatePicker
+                label="Date"
+                date={formData.date ? new Date(formData.date) : undefined}
+                onChange={(date) => {
+                  const dateString = date.toISOString().split("T")[0];
+                  setFormData(prev => ({ ...prev, date: dateString }));
+                }}
               />
             </div>
             <div>
@@ -371,18 +384,31 @@ const EventModal: React.FC<{
             <label className="block text-sm font-medium text-foreground mb-1">
               Tag
             </label>
-            <select
-              name="tag"
+            <Select
               value={formData.tag}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              onValueChange={(value) => {
+                const selectedTag = tagColors.find((t) => t.name === value);
+                setFormData(prev => ({
+                  ...prev,
+                  tag: value,
+                  color: selectedTag?.color || "bg-blue-500",
+                }));
+              }}
             >
-              {tagColors.map((tag) => (
-                <option key={tag.name} value={tag.name}>
-                  {tag.name}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a tag" />
+              </SelectTrigger>
+              <SelectContent>
+                {tagColors.map((tag) => (
+                  <SelectItem key={tag.name} value={tag.name}>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-3 h-3 rounded-full ${tag.color}`} />
+                      {tag.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <DialogFooter className="flex justify-between items-center pt-4">

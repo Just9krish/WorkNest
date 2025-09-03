@@ -49,9 +49,9 @@ const AuthComponent: React.FC = () => {
         <CardContent>
           <div className="text-center">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-linear-to-br from-primary to-secondary font-bold text-primary-foreground text-4xl">
-              Q
+              W
             </div>
-            <h1 className="text-3xl font-bold ">Welcome to Quantum</h1>
+            <h1 className="text-3xl font-bold ">Welcome to Worknest</h1>
             <p className="mt-2 text-muted-foreground">
               Sign in to access your workspace.
             </p>

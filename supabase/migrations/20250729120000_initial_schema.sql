@@ -1,5 +1,5 @@
 /*
-# Initial Schema Setup for Quantum Project Management
+# Initial Schema Setup for Worknest Project Management
 
 This script sets up the foundational tables for the application, including profiles, pages, blocks, and templates. It also establishes Row Level Security (RLS) policies to ensure users can only access their own data and creates a trigger to automatically populate user profiles upon sign-up.
 

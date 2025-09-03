@@ -157,7 +157,7 @@ const AppSidebar: React.FC = () => {
       <SidebarHeader>
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 bg-gradient-to-br from-primary to-primary/80 rounded-md flex items-center justify-center font-bold text-primary-foreground text-lg shrink-0">
-            Q
+            W
           </div>
           {state !== 'collapsed' && workspace && (
             <h1 className="text-lg font-bold text-sidebar-foreground">

@@ -5,6 +5,15 @@ import { RoadmapTask } from "../../types";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { Input } from "../ui/input";
+import { Textarea } from "../ui/textarea";
+import { DatePicker } from "../ui/date-picker";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 import {
   Dialog,
   DialogContent,
@@ -200,22 +209,23 @@ const RoadmapTemplate: React.FC = () => {
 
               {/* Status Dropdown */}
               <div className="flex items-center justify-between">
-                <select
+                <Select
                   value={task.status}
-                  onChange={(e) =>
-                    handleStatusChange(
-                      task.id,
-                      e.target.value as RoadmapTask["status"]
-                    )
+                  onValueChange={(value) =>
+                    handleStatusChange(task.id, value as RoadmapTask["status"])
                   }
-                  className={`px-3 py-1 rounded-md border border-input text-sm font-medium bg-background text-foreground ${getStatusColor(
-                    task.status
-                  )} focus:outline-none focus:ring-2 focus:ring-ring`}
                 >
-                  <option value="Not Started">Not Started</option>
-                  <option value="In Progress">In Progress</option>
-                  <option value="Completed">Completed</option>
-                </select>
+                  <SelectTrigger
+                    className={`w-40 ${getStatusColor(task.status)}`}
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Not Started">Not Started</SelectItem>
+                    <SelectItem value="In Progress">In Progress</SelectItem>
+                    <SelectItem value="Completed">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </Card>
           ))}
@@ -252,9 +262,7 @@ const AddMilestoneModal: React.FC<{
   };
 
   const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -285,12 +293,12 @@ const AddMilestoneModal: React.FC<{
             <label className="block text-sm font-medium text-foreground mb-1">
               Description
             </label>
-            <textarea
+            <Textarea
               name="description"
               value={formData.description}
               onChange={handleChange}
-              rows={3}
-              className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="Add milestone description..."
+              className="min-h-20"
             />
           </div>
 
@@ -298,39 +306,62 @@ const AddMilestoneModal: React.FC<{
             <label className="block text-sm font-medium text-foreground mb-1">
               Category
             </label>
-            <select
-              name="category"
+            <Select
               value={formData.category}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              onValueChange={(value) => {
+                setFormData((prev) => ({
+                  ...prev,
+                  category: value as RoadmapTask["category"],
+                }));
+              }}
             >
-              <option value="Planning">Planning</option>
-              <option value="Design">Design</option>
-              <option value="Development">Development</option>
-            </select>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Planning">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-primary/10" />
+                    Planning
+                  </div>
+                </SelectItem>
+                <SelectItem value="Design">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-chart-2/10" />
+                    Design
+                  </div>
+                </SelectItem>
+                <SelectItem value="Development">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-chart-3/10" />
+                    Development
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
-                Start Date
-              </label>
-              <Input
-                type="date"
-                name="startDate"
-                value={formData.startDate}
-                onChange={handleChange}
+              <DatePicker
+                label="Start Date"
+                date={
+                  formData.startDate ? new Date(formData.startDate) : undefined
+                }
+                onChange={(date) => {
+                  const dateString = date.toISOString().split("T")[0];
+                  setFormData((prev) => ({ ...prev, startDate: dateString }));
+                }}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
-                End Date
-              </label>
-              <Input
-                type="date"
-                name="endDate"
-                value={formData.endDate}
-                onChange={handleChange}
+              <DatePicker
+                label="End Date"
+                date={formData.endDate ? new Date(formData.endDate) : undefined}
+                onChange={(date) => {
+                  const dateString = date.toISOString().split("T")[0];
+                  setFormData((prev) => ({ ...prev, endDate: dateString }));
+                }}
               />
             </div>
           </div>
