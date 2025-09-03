@@ -5,6 +5,7 @@ import React, {
   ReactNode,
   useEffect,
   useCallback,
+  useRef,
 } from "react";
 import {
   Page,
@@ -118,7 +119,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -133,6 +134,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   const [roadmapTasks, setRoadmapTasks] = useState<RoadmapTask[]>([]);
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
+  const dataLoadedRef = useRef(false);
 
   useEffect(() => {
     const getSession = async () => {
@@ -141,7 +143,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       } = await supabase.auth.getSession();
       setSession(session);
       setUser(session?.user ?? null);
-      setIsLoading(false);
+      // Don't set loading to false here - let the data fetch handle it
     };
     getSession();
 
@@ -156,6 +158,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
           setCalendarEvents([]);
           setProfile(null);
           setWorkspace(null);
+          setIsLoading(false);
+          dataLoadedRef.current = false;
         }
       }
     );
@@ -166,6 +170,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   useEffect(() => {
     if (!user) {
       if (!isLoading) setIsLoading(false);
+      dataLoadedRef.current = false;
+      return;
+    }
+
+    // If data is already loaded, don't refetch
+    if (dataLoadedRef.current) {
+      setIsLoading(false);
       return;
     }
 
@@ -201,6 +212,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         setCalendarEvents(calendarRes.data as CalendarEvent[]);
 
       setIsLoading(false);
+      dataLoadedRef.current = true;
     };
     fetchData();
 
