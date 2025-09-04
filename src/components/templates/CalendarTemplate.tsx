@@ -64,7 +64,10 @@ const CalendarTemplate: React.FC = () => {
   };
 
   const formatDate = (date: Date) => {
-    return date.toISOString().split("T")[0];
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   const getEventsForDate = (date: string) => {
@@ -72,8 +75,10 @@ const CalendarTemplate: React.FC = () => {
   };
 
   const handleDateClick = (day: number) => {
+    console.log('Date clicked:', day);
     const clickedDate = new Date(currentYear, currentMonth, day);
     const dateString = formatDate(clickedDate);
+    console.log('Formatted date:', dateString);
     setSelectedDate(dateString);
     setShowAddModal(true);
   };
@@ -285,13 +290,20 @@ const EventModal: React.FC<{
 }> = ({ event, selectedDate, tagColors, open, onOpenChange }) => {
   const { addCalendarEvent, updateCalendarEvent, deleteCalendarEvent } =
     useApp();
+
+  const formatDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
   const [formData, setFormData] = useState({
     title: event?.title || "",
     date: event?.date || selectedDate,
     time: event?.time || "09:00",
     tag: event?.tag || "Meeting",
     color: event?.color || "bg-blue-500",
-    description: (event as any)?.description || "",
+    description: (event as CalendarEvent)?.description || "",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -360,7 +372,7 @@ const EventModal: React.FC<{
                 label="Date"
                 date={formData.date ? new Date(formData.date) : undefined}
                 onChange={date => {
-                  const dateString = date.toISOString().split("T")[0];
+                  const dateString = formatDate(date);
                   setFormData(prev => ({ ...prev, date: dateString }));
                 }}
               />

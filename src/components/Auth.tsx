@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import { useNavigate } from "react-router-dom";
-import { Github, Chrome, LoaderCircle } from "lucide-react";
+import { Chrome, LoaderCircle } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 
@@ -60,18 +60,18 @@ const AuthComponent: React.FC = () => {
           <div className="mt-8 space-y-4">
             <Button
               onClick={() => handleOAuthLogin("google")}
-              className="w-full"
+              className="w-full h-12"
             >
-              <Chrome className="mr-3 h-5 w-5" />
+              <Chrome className="mr-3 size-5" />
               Sign in with Google
             </Button>
-            <Button
+            {/* <Button
               onClick={() => handleOAuthLogin("github")}
-              className="w-full"
+              className="w-full h-12"
             >
-              <Github className="mr-3 h-5 w-5" />
+              <Github className="mr-3 size-5" />
               Sign in with GitHub
-            </Button>
+            </Button> */}
           </div>
         </CardContent>
       </Card>

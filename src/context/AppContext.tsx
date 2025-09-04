@@ -74,7 +74,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const { blocks, getPageBlocks, getChildBlocks, addBlock, updateBlock, deleteBlock, toggleBlockExpansion } =
     useBlocks();
   const { roadmapTasks } = useRoadmap();
-  const { calendarEvents } = useCalendar();
+  const { calendarEvents, addCalendarEvent, updateCalendarEvent, deleteCalendarEvent } = useCalendar();
   const { templates, selectedTemplateId, selectTemplate } = useTemplates();
 
   const isLoading = isAuthLoading; // Extend later if needed
@@ -111,9 +111,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         addRoadmapTask: async () => {},
         updateRoadmapTask: async () => {},
         deleteRoadmapTask: async () => {},
-        addCalendarEvent: async () => {},
-        updateCalendarEvent: async () => {},
-        deleteCalendarEvent: async () => {},
+        addCalendarEvent,
+        updateCalendarEvent,
+        deleteCalendarEvent,
         signOut,
       }}
     >
