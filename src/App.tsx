@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
 import { AppProvider, useApp } from "./context/AppContext";
+import { RootProviders } from "./context/RootProviders";
 import AppSidebar from "./components/AppSidebar";
 import MainContent from "./components/MainContent";
 import AuthComponent from "./components/Auth";
@@ -54,14 +55,16 @@ const AppContent: React.FC = () => {
 
 const App: React.FC = () => {
   return (
-    <AppProvider>
-      <ThemeProvider defaultTheme="system" storageKey="worknest-theme">
-        <Routes>
-          <Route path="/login" element={<AuthComponent />} />
-          <Route path="/*" element={<AppContent />} />
-        </Routes>
-      </ThemeProvider>
-    </AppProvider>
+    <RootProviders>
+      <AppProvider>
+        <ThemeProvider defaultTheme="system" storageKey="worknest-theme">
+          <Routes>
+            <Route path="/login" element={<AuthComponent />} />
+            <Route path="/*" element={<AppContent />} />
+          </Routes>
+        </ThemeProvider>
+      </AppProvider>
+    </RootProviders>
   );
 };
 
