@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { CalendarEvent } from "../types";
 import { supabase } from "../lib/supabase";
+import { TABLES, CHANNELS } from "../lib/utils";
 import { useAuth } from "./auth-context";
 import { mapCalendarEventFromRow } from "../lib/mappers";
 
@@ -24,17 +25,28 @@ export function CalendarProvider({ children }: { children: React.ReactNode }) {
     }
     let cancelled = false;
     const load = async () => {
-      const { data } = await supabase.from("calendar_events").select("*").order("date", { ascending: true });
-      if (cancelled) return;
-      setCalendarEvents((data || []).map(mapCalendarEventFromRow));
+      try {
+        const { data, error } = await supabase
+          .from(TABLES.calendarEvents)
+          .select("*")
+          .order("date", { ascending: true });
+        if (cancelled) return;
+        if (error) {
+          console.error("Error loading calendar events:", error);
+          return;
+        }
+        setCalendarEvents((data || []).map(mapCalendarEventFromRow));
+      } catch (err) {
+        if (!cancelled) console.error("Unexpected error loading calendar events:", err);
+      }
     };
     load();
 
     const channel = supabase
-      .channel("public:calendar_events")
+      .channel(CHANNELS.calendarEvents)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "calendar_events" },
+        { event: "*", schema: "public", table: TABLES.calendarEvents },
         payload => {
           if (payload.eventType === "INSERT") {
             setCalendarEvents(prev => [...prev, mapCalendarEventFromRow(payload.new)]);
@@ -62,7 +74,7 @@ export function CalendarProvider({ children }: { children: React.ReactNode }) {
   const addCalendarEvent = useCallback(
     async (event: Omit<CalendarEvent, "id" | "userId" | "createdAt">) => {
       if (!user) throw new Error("User not authenticated");
-      const { error } = await supabase.from("calendar_events").insert({
+      const { error } = await supabase.from(TABLES.calendarEvents).insert({
         user_id: user.id,
         title: event.title,
         date: event.date,
@@ -86,14 +98,14 @@ export function CalendarProvider({ children }: { children: React.ReactNode }) {
       if (updates.color !== undefined) dbUpdates.color = updates.color;
       // if (updates.description !== undefined) dbUpdates.description = updates.description; // Temporarily commented out
 
-      const { error } = await supabase.from("calendar_events").update(dbUpdates).eq("id", eventId);
+      const { error } = await supabase.from(TABLES.calendarEvents).update(dbUpdates).eq("id", eventId);
       if (error) throw error;
     },
     []
   );
 
   const deleteCalendarEvent = useCallback(async (eventId: string) => {
-    const { error } = await supabase.from("calendar_events").delete().eq("id", eventId);
+    const { error } = await supabase.from(TABLES.calendarEvents).delete().eq("id", eventId);
     if (error) throw error;
   }, []);
 

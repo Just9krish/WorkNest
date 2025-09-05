@@ -35,9 +35,9 @@ export function mapCalendarEventFromRow(row: Record<string, unknown>): CalendarE
     userId: row.user_id as string,
     title: (row.title as string) || "",
     date: (row.date as string) || "",
-    time: (row.time as string) || undefined,
-    tag: (row.tag as string) || undefined,
-    color: (row.color as string) || undefined,
+    time: (row.time as string) || null,
+    tag: (row.tag as string) || "",
+    color: (row.color as string) || "",
     description: (row.description as string) || null, // Will be null until migration is applied
   };
 }

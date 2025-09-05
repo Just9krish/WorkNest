@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Page } from "../types";
 import { supabase } from "../lib/supabase";
+import { TABLES, CHANNELS } from "../lib/utils";
 import { useAuth } from "./auth-context";
 import { mapPageFromRow } from "../lib/mappers";
 
@@ -33,19 +34,27 @@ export function PagesProvider({ children }: { children: React.ReactNode }) {
 
     let cancelled = false;
     const load = async () => {
-      const { data } = await supabase.from("pages").select("*").order("created_at");
-      if (cancelled) return;
-      const mapped = (data || []).map(mapPageFromRow);
-      setPages(mapped);
-      if (mapped.length > 0) setSelectedPageId(mapped[0].id);
+      try {
+        const { data, error } = await supabase.from(TABLES.pages).select("*").order("created_at");
+        if (cancelled) return;
+        if (error) {
+          console.error("Error loading pages:", error);
+          return;
+        }
+        const mapped = (data || []).map(mapPageFromRow);
+        setPages(mapped);
+        if (mapped.length > 0) setSelectedPageId(mapped[0].id);
+      } catch (err) {
+        if (!cancelled) console.error("Unexpected error loading pages:", err);
+      }
     };
     load();
 
     const channel = supabase
-      .channel("public:pages")
+      .channel(CHANNELS.pages)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "pages" },
+        { event: "*", schema: "public", table: TABLES.pages },
         payload => {
           if (payload.eventType === "INSERT") setPages(p => [...p, mapPageFromRow(payload.new)]);
           if (payload.eventType === "UPDATE")
@@ -73,7 +82,7 @@ export function PagesProvider({ children }: { children: React.ReactNode }) {
     async (parentId: string | null = null) => {
       if (!user) return;
       const { data, error } = await supabase
-        .from("pages")
+        .from(TABLES.pages)
         .insert({ title: "Untitled", user_id: user.id, parent_id: parentId, icon: "📄" })
         .select()
         .single();
@@ -94,14 +103,14 @@ export function PagesProvider({ children }: { children: React.ReactNode }) {
         parent_id: updates.parentId,
         is_expanded: updates.isExpanded,
       };
-      const { error } = await supabase.from("pages").update(dbUpdates).eq("id", pageId);
+      const { error } = await supabase.from(TABLES.pages).update(dbUpdates).eq("id", pageId);
       if (error) console.error("Error updating page:", error);
     },
     []
   );
 
   const deletePage = useCallback(async (pageId: string) => {
-    const { error } = await supabase.from("pages").delete().eq("id", pageId);
+    const { error } = await supabase.from(TABLES.pages).delete().eq("id", pageId);
     if (error) console.error("Error deleting page:", error);
   }, []);
 

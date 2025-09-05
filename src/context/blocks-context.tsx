@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Block } from "../types";
 import { supabase } from "../lib/supabase";
+import { TABLES, CHANNELS } from "../lib/utils";
 import { useAuth } from "./auth-context";
 import { mapBlockFromRow } from "../lib/mappers";
 
@@ -27,17 +28,25 @@ export function BlocksProvider({ children }: { children: React.ReactNode }) {
     }
     let cancelled = false;
     const load = async () => {
-      const { data } = await supabase.from("blocks").select("*");
-      if (cancelled) return;
-      setBlocks((data || []).map(mapBlockFromRow));
+      try {
+        const { data, error } = await supabase.from(TABLES.blocks).select("*");
+        if (cancelled) return;
+        if (error) {
+          console.error("Error loading blocks:", error);
+          return;
+        }
+        setBlocks((data || []).map(mapBlockFromRow));
+      } catch (err) {
+        if (!cancelled) console.error("Unexpected error loading blocks:", err);
+      }
     };
     load();
 
     const channel = supabase
-      .channel("public:blocks")
+      .channel(CHANNELS.blocks)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "blocks" },
+        { event: "*", schema: "public", table: TABLES.blocks },
         payload => {
           if (payload.eventType === "INSERT") setBlocks(b => [...b, mapBlockFromRow(payload.new)]);
           if (payload.eventType === "UPDATE")
@@ -73,7 +82,7 @@ export function BlocksProvider({ children }: { children: React.ReactNode }) {
     async (pageId: string, _afterBlockId?: string, parentBlockId?: string): Promise<Block> => {
       if (!user) throw new Error("User not authenticated");
       const { data, error } = await supabase
-        .from("blocks")
+        .from(TABLES.blocks)
         .insert({ page_id: pageId, user_id: user.id, parent_block_id: parentBlockId, type: "text", content: "" })
         .select()
         .single();
@@ -91,12 +100,12 @@ export function BlocksProvider({ children }: { children: React.ReactNode }) {
     if (updates.src !== undefined) dbUpdates.src = updates.src;
     if (updates.language !== undefined) dbUpdates.language = updates.language;
     if (updates.isExpanded !== undefined) dbUpdates.is_expanded = updates.isExpanded;
-    const { error } = await supabase.from("blocks").update(dbUpdates).eq("id", blockId);
+    const { error } = await supabase.from(TABLES.blocks).update(dbUpdates).eq("id", blockId);
     if (error) console.error("Error updating block:", error);
   }, []);
 
   const deleteBlock = useCallback(async (blockId: string) => {
-    const { error } = await supabase.from("blocks").delete().eq("id", blockId);
+    const { error } = await supabase.from(TABLES.blocks).delete().eq("id", blockId);
     if (error) console.error("Error deleting block:", error);
   }, []);
 

@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { supabase } from "../lib/supabase";
+import { getCurrentSession, signInWithOAuth } from "../lib/auth";
 import { useNavigate } from "react-router-dom";
 import { Chrome, LoaderCircle } from "lucide-react";
 import { Button } from "./ui/button";
@@ -11,25 +11,26 @@ const AuthComponent: React.FC = () => {
 
   useEffect(() => {
     const checkSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session) {
-        navigate("/");
-      } else {
+      try {
+        const session = await getCurrentSession();
+        if (session) {
+          navigate("/");
+        } else {
+          setLoading(false);
+        }
+      } catch {
         setLoading(false);
       }
     };
-    checkSession();
+    void checkSession();
   }, [navigate]);
 
   const handleOAuthLogin = async (provider: "github" | "google") => {
-    await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: window.location.origin,
-      },
-    });
+    try {
+      await signInWithOAuth(provider, window.location.origin);
+    } catch {
+      // already logged
+    }
   };
 
   if (loading) {

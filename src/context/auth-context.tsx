@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
+import { TABLES } from "../lib/utils";
 import { Profile, Workspace } from "../types";
 
 interface AuthContextValue {
@@ -55,7 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const load = async () => {
       setIsAuthLoading(true);
       const { data: profileRes } = await supabase
-        .from("profiles")
+        .from(TABLES.profiles)
         .select("*")
         .eq("id", user.id)
         .single();
