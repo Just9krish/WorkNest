@@ -1,9 +1,9 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Page } from "../types";
-import { supabase } from "../lib/supabase";
-import { TABLES, CHANNELS } from "../lib/utils";
+import { databases, DATABASE_ID, COLLECTIONS, queryByUserId, queryOrderByCreatedAt } from "../lib/appwrite";
 import { useAuth } from "./auth-context";
-import { mapPageFromRow } from "../lib/mappers";
+import { mapPageFromDocument } from "../lib/mappers";
+import { ID } from "appwrite";
 
 interface PagesContextValue {
   pages: Page[];
@@ -12,7 +12,7 @@ interface PagesContextValue {
   addPage: (parentId?: string | null) => Promise<void>;
   updatePage: (
     pageId: string,
-    updates: Partial<Omit<Page, "id" | "userId" | "createdAt">>
+    updates: Partial<Omit<Page, "$id" | "userId" | "$createdAt" | "$updatedAt">>
   ) => Promise<void>;
   deletePage: (pageId: string) => Promise<void>;
   togglePageExpansion: (pageId: string) => void;
@@ -20,7 +20,7 @@ interface PagesContextValue {
 
 const PagesContext = createContext<PagesContextValue | undefined>(undefined);
 
-export function PagesProvider({ children }: { children: React.ReactNode }) {
+export function PagesProvider({ children }: { children: React.ReactNode; }) {
   const { user } = useAuth();
   const [pages, setPages] = useState<Page[]>([]);
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
@@ -35,42 +35,24 @@ export function PagesProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
     const load = async () => {
       try {
-        const { data, error } = await supabase.from(TABLES.pages).select("*").order("created_at");
+        const response = await databases.listDocuments(
+          DATABASE_ID,
+          COLLECTIONS.pages,
+          [queryByUserId(user.$id), queryOrderByCreatedAt]
+        );
         if (cancelled) return;
-        if (error) {
-          console.error("Error loading pages:", error);
-          return;
-        }
-        const mapped = (data || []).map(mapPageFromRow);
+
+        const mapped = response.documents.map(mapPageFromDocument);
         setPages(mapped);
-        if (mapped.length > 0) setSelectedPageId(mapped[0].id);
+        if (mapped.length > 0) setSelectedPageId(mapped[0].$id);
       } catch (err) {
         if (!cancelled) console.error("Unexpected error loading pages:", err);
       }
     };
     load();
 
-    const channel = supabase
-      .channel(CHANNELS.pages)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: TABLES.pages },
-        payload => {
-          if (payload.eventType === "INSERT") setPages(p => [...p, mapPageFromRow(payload.new)]);
-          if (payload.eventType === "UPDATE")
-            setPages(p => p.map(pg => (pg.id === payload.new.id ? mapPageFromRow(payload.new) : pg)));
-          if (payload.eventType === "DELETE") {
-            const deletedId = payload.old.id as string;
-            setPages(p => p.filter(pg => pg.id !== deletedId));
-            if (selectedPageId === deletedId) setSelectedPageId(null);
-          }
-        }
-      )
-      .subscribe();
-
     return () => {
       cancelled = true;
-      supabase.removeChannel(channel);
     };
   }, [user, selectedPageId]);
 
@@ -81,13 +63,23 @@ export function PagesProvider({ children }: { children: React.ReactNode }) {
   const addPage = useCallback(
     async (parentId: string | null = null) => {
       if (!user) return;
-      const { data, error } = await supabase
-        .from(TABLES.pages)
-        .insert({ title: "Untitled", user_id: user.id, parent_id: parentId, icon: "📄" })
-        .select()
-        .single();
-      if (error) console.error("Error adding page:", error);
-      else if (data) setSelectedPageId(data.id as string);
+      try {
+        const newPage = await databases.createDocument(
+          DATABASE_ID,
+          COLLECTIONS.pages,
+          ID.unique(),
+          {
+            title: "Untitled",
+            userId: user.$id,
+            parentId: parentId,
+            icon: "📄",
+            isExpanded: false
+          }
+        );
+        setSelectedPageId(newPage.$id);
+      } catch (error) {
+        console.error("Error adding page:", error);
+      }
     },
     [user]
   );
@@ -95,28 +87,28 @@ export function PagesProvider({ children }: { children: React.ReactNode }) {
   const updatePage = useCallback(
     async (
       pageId: string,
-      updates: Partial<Omit<Page, "id" | "userId" | "createdAt">>
+      updates: Partial<Omit<Page, "$id" | "userId" | "$createdAt" | "$updatedAt">>
     ) => {
-      const dbUpdates = {
-        title: updates.title,
-        icon: updates.icon,
-        parent_id: updates.parentId,
-        is_expanded: updates.isExpanded,
-      };
-      const { error } = await supabase.from(TABLES.pages).update(dbUpdates).eq("id", pageId);
-      if (error) console.error("Error updating page:", error);
+      try {
+        await databases.updateDocument(DATABASE_ID, COLLECTIONS.pages, pageId, updates);
+      } catch (error) {
+        console.error("Error updating page:", error);
+      }
     },
     []
   );
 
   const deletePage = useCallback(async (pageId: string) => {
-    const { error } = await supabase.from(TABLES.pages).delete().eq("id", pageId);
-    if (error) console.error("Error deleting page:", error);
+    try {
+      await databases.deleteDocument(DATABASE_ID, COLLECTIONS.pages, pageId);
+    } catch (error) {
+      console.error("Error deleting page:", error);
+    }
   }, []);
 
   const togglePageExpansion = useCallback(
     (pageId: string) => {
-      const page = pages.find(p => p.id === pageId);
+      const page = pages.find(p => p.$id === pageId);
       if (page) void updatePage(pageId, { isExpanded: !page.isExpanded });
     },
     [pages, updatePage]

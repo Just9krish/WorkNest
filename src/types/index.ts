@@ -1,8 +1,11 @@
-import { Database } from "./supabase";
+// Appwrite document base type
+export interface AppwriteDocument {
+  $id: string;
+  $createdAt: string;
+  $updatedAt: string;
+}
 
-export type Page = {
-  id: string;
-  createdAt: string;
+export type Page = AppwriteDocument & {
   title: string;
   icon: string | null;
   parentId: string | null;
@@ -10,16 +13,17 @@ export type Page = {
   userId: string;
 };
 
-export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+export type Profile = AppwriteDocument & {
+  username: string | null;
+  avatarUrl: string | null;
+};
 
 export interface Workspace {
   id: string;
   name: string;
 }
 
-export type Block = {
-  id: string;
-  createdAt: string;
+export type Block = AppwriteDocument & {
   pageId: string;
   userId: string;
   type: "text" | "heading" | "todo" | "image" | "toggle" | "divider" | "code";
@@ -46,9 +50,7 @@ export interface Template {
   type: "roadmap" | "calendar";
 }
 
-export type RoadmapTask = {
-  id: string;
-  createdAt: string;
+export type RoadmapTask = AppwriteDocument & {
   userId: string;
   title: string;
   description: string | null;
@@ -59,9 +61,7 @@ export type RoadmapTask = {
   status: "Not Started" | "In Progress" | "Completed";
 };
 
-export type CalendarEvent = {
-  id: string;
-  createdAt: string;
+export type CalendarEvent = AppwriteDocument & {
   userId: string;
   title: string;
   date: string;

@@ -1,13 +1,11 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { Session, User } from "@supabase/supabase-js";
-import { supabase } from "../lib/supabase";
-import { TABLES } from "../lib/utils";
+import { Models } from "appwrite";
+import { getCurrentUser, getUserProfile, signOut, handleOAuthCallback } from "../lib/auth";
 import { Profile, Workspace } from "../types";
 
 interface AuthContextValue {
   isAuthLoading: boolean;
-  session: Session | null;
-  user: User | null;
+  user: Models.User<Models.Preferences> | null;
   profile: Profile | null;
   workspace: Workspace | null;
   signOut: () => Promise<void>;
@@ -15,38 +13,35 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: { children: React.ReactNode; }) {
   const [isAuthLoading, setIsAuthLoading] = useState(false);
-  const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<Models.User<Models.Preferences> | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
 
   useEffect(() => {
     let isMounted = true;
     const init = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!isMounted) return;
-      setSession(session);
-      setUser(session?.user ?? null);
+      try {
+        // First, handle OAuth callback if present (after redirect)
+        await handleOAuthCallback();
+        if (!isMounted) return;
+
+        // Then check if user is authenticated
+        const currentUser = await getCurrentUser();
+        if (!isMounted) return;
+
+        if (currentUser) {
+          setUser(currentUser);
+        }
+      } catch (error) {
+        console.error("Error initializing auth:", error);
+      }
     };
     init();
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, s) => {
-      setSession(s);
-      setUser(s?.user ?? null);
-      if (_event === "SIGNED_OUT") {
-        setProfile(null);
-        setWorkspace(null);
-        setIsAuthLoading(false);
-      }
-    });
-
     return () => {
       isMounted = false;
-      listener.subscription.unsubscribe();
     };
   }, []);
 
@@ -55,17 +50,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
     const load = async () => {
       setIsAuthLoading(true);
-      const { data: profileRes } = await supabase
-        .from(TABLES.profiles)
-        .select("*")
-        .eq("id", user.id)
-        .single();
-      if (cancelled) return;
-      if (profileRes) {
-        setProfile(profileRes as Profile);
-        setWorkspace({ id: profileRes.id, name: profileRes.username || "My Workspace" });
+      try {
+        const userProfile = await getUserProfile(user.$id);
+        if (cancelled) return;
+
+        if (userProfile) {
+          setProfile(userProfile);
+          setWorkspace({
+            id: userProfile.$id,
+            name: userProfile.username || "My Workspace"
+          });
+        }
+      } catch (error) {
+        console.error("Error loading user profile:", error);
+      } finally {
+        setIsAuthLoading(false);
       }
-      setIsAuthLoading(false);
     };
     load();
     return () => {
@@ -76,15 +76,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<AuthContextValue>(
     () => ({
       isAuthLoading,
-      session,
       user,
       profile,
       workspace,
       signOut: async () => {
-        await supabase.auth.signOut();
+        await signOut();
+        setUser(null);
+        setProfile(null);
+        setWorkspace(null);
+        setIsAuthLoading(false);
       },
     }),
-    [isAuthLoading, session, user, profile, workspace]
+    [isAuthLoading, user, profile, workspace]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -5,8 +5,8 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// Centralized constants to avoid magic strings in Supabase usage
-export const TABLES = {
+// Appwrite collection constants
+export const COLLECTIONS = {
   pages: "pages",
   blocks: "blocks",
   profiles: "profiles",
@@ -14,10 +14,4 @@ export const TABLES = {
   roadmapTasks: "roadmap_tasks",
 } as const;
 
-export const CHANNELS = {
-  pages: `public:${"pages"}`,
-  blocks: `public:${"blocks"}`,
-  calendarEvents: `public:${"calendar_events"}`,
-} as const;
-
-export type TableName = typeof TABLES[keyof typeof TABLES];
+export type CollectionName = typeof COLLECTIONS[keyof typeof COLLECTIONS];

@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { getCurrentSession, signInWithOAuth } from "../lib/auth";
+import { getCurrentUser, signInWithOAuth, handleOAuthCallback } from "../lib/auth";
 import { useNavigate } from "react-router-dom";
 import { Chrome, LoaderCircle } from "lucide-react";
 import { Button } from "./ui/button";
@@ -12,8 +12,12 @@ const AuthComponent: React.FC = () => {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const session = await getCurrentSession();
-        if (session) {
+        // First, handle OAuth callback if present (after redirect)
+        await handleOAuthCallback();
+
+        // Then check if user is authenticated
+        const user = await getCurrentUser();
+        if (user) {
           navigate("/");
         } else {
           setLoading(false);
@@ -27,7 +31,9 @@ const AuthComponent: React.FC = () => {
 
   const handleOAuthLogin = async (provider: "github" | "google") => {
     try {
-      await signInWithOAuth(provider, window.location.origin);
+      // Use the full current URL as redirect to preserve the login path
+      const redirectUrl = `${window.location.origin}${window.location.pathname}`;
+      await signInWithOAuth(provider, redirectUrl);
     } catch {
       // already logged
     }

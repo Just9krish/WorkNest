@@ -1,9 +1,9 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Block } from "../types";
-import { supabase } from "../lib/supabase";
-import { TABLES, CHANNELS } from "../lib/utils";
+import { databases, DATABASE_ID, COLLECTIONS, queryByUserId } from "../lib/appwrite";
 import { useAuth } from "./auth-context";
-import { mapBlockFromRow } from "../lib/mappers";
+import { mapBlockFromDocument } from "../lib/mappers";
+import { ID } from "appwrite";
 
 interface BlocksContextValue {
   blocks: Block[];
@@ -17,7 +17,7 @@ interface BlocksContextValue {
 
 const BlocksContext = createContext<BlocksContextValue | undefined>(undefined);
 
-export function BlocksProvider({ children }: { children: React.ReactNode }) {
+export function BlocksProvider({ children }: { children: React.ReactNode; }) {
   const { user } = useAuth();
   const [blocks, setBlocks] = useState<Block[]>([]);
 
@@ -29,36 +29,22 @@ export function BlocksProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
     const load = async () => {
       try {
-        const { data, error } = await supabase.from(TABLES.blocks).select("*");
+        const response = await databases.listDocuments(
+          DATABASE_ID,
+          COLLECTIONS.blocks,
+          [queryByUserId(user.$id)]
+        );
         if (cancelled) return;
-        if (error) {
-          console.error("Error loading blocks:", error);
-          return;
-        }
-        setBlocks((data || []).map(mapBlockFromRow));
+
+        setBlocks(response.documents.map(mapBlockFromDocument));
       } catch (err) {
         if (!cancelled) console.error("Unexpected error loading blocks:", err);
       }
     };
     load();
 
-    const channel = supabase
-      .channel(CHANNELS.blocks)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: TABLES.blocks },
-        payload => {
-          if (payload.eventType === "INSERT") setBlocks(b => [...b, mapBlockFromRow(payload.new)]);
-          if (payload.eventType === "UPDATE")
-            setBlocks(b => b.map(bl => (bl.id === payload.new.id ? mapBlockFromRow(payload.new) : bl)));
-          if (payload.eventType === "DELETE") setBlocks(b => b.filter(bl => bl.id !== (payload.old.id as string)));
-        }
-      )
-      .subscribe();
-
     return () => {
       cancelled = true;
-      supabase.removeChannel(channel);
     };
   }, [user]);
 
@@ -66,7 +52,7 @@ export function BlocksProvider({ children }: { children: React.ReactNode }) {
     (pageId: string) =>
       blocks
         .filter(b => b.pageId === pageId && !b.parentBlockId)
-        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
+        .sort((a, b) => new Date(a.$createdAt).getTime() - new Date(b.$createdAt).getTime()),
     [blocks]
   );
 
@@ -74,44 +60,53 @@ export function BlocksProvider({ children }: { children: React.ReactNode }) {
     (parentBlockId: string) =>
       blocks
         .filter(b => b.parentBlockId === parentBlockId)
-        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
+        .sort((a, b) => new Date(a.$createdAt).getTime() - new Date(b.$createdAt).getTime()),
     [blocks]
   );
 
   const addBlock = useCallback(
     async (pageId: string, _afterBlockId?: string, parentBlockId?: string): Promise<Block> => {
       if (!user) throw new Error("User not authenticated");
-      const { data, error } = await supabase
-        .from(TABLES.blocks)
-        .insert({ page_id: pageId, user_id: user.id, parent_block_id: parentBlockId, type: "text", content: "" })
-        .select()
-        .single();
-      if (error) throw error;
-      return mapBlockFromRow(data as Record<string, unknown>);
+      try {
+        const newBlock = await databases.createDocument(
+          DATABASE_ID,
+          COLLECTIONS.blocks,
+          ID.unique(),
+          {
+            pageId,
+            userId: user.$id,
+            parentBlockId: parentBlockId || null,
+            type: "text",
+            content: ""
+          }
+        );
+        return mapBlockFromDocument(newBlock);
+      } catch (error) {
+        throw error;
+      }
     },
     [user]
   );
 
   const updateBlock = useCallback(async (blockId: string, updates: Partial<Block>) => {
-    const dbUpdates: Record<string, unknown> = {};
-    if (updates.content !== undefined) dbUpdates.content = updates.content;
-    if (updates.type !== undefined) dbUpdates.type = updates.type;
-    if (updates.checked !== undefined) dbUpdates.checked = updates.checked;
-    if (updates.src !== undefined) dbUpdates.src = updates.src;
-    if (updates.language !== undefined) dbUpdates.language = updates.language;
-    if (updates.isExpanded !== undefined) dbUpdates.is_expanded = updates.isExpanded;
-    const { error } = await supabase.from(TABLES.blocks).update(dbUpdates).eq("id", blockId);
-    if (error) console.error("Error updating block:", error);
+    try {
+      await databases.updateDocument(DATABASE_ID, COLLECTIONS.blocks, blockId, updates);
+    } catch (error) {
+      console.error("Error updating block:", error);
+    }
   }, []);
 
   const deleteBlock = useCallback(async (blockId: string) => {
-    const { error } = await supabase.from(TABLES.blocks).delete().eq("id", blockId);
-    if (error) console.error("Error deleting block:", error);
+    try {
+      await databases.deleteDocument(DATABASE_ID, COLLECTIONS.blocks, blockId);
+    } catch (error) {
+      console.error("Error deleting block:", error);
+    }
   }, []);
 
   const toggleBlockExpansion = useCallback(
     (blockId: string) => {
-      const block = blocks.find(b => b.id === blockId);
+      const block = blocks.find(b => b.$id === blockId);
       if (block) void updateBlock(blockId, { isExpanded: !block.isExpanded });
     },
     [blocks, updateBlock]

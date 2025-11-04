@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { RoadmapTask } from "../types";
-import { supabase } from "../lib/supabase";
-import { TABLES } from "../lib/utils";
+import { databases, DATABASE_ID, COLLECTIONS, queryByUserId } from "../lib/appwrite";
 import { useAuth } from "./auth-context";
+import { mapRoadmapTaskFromDocument } from "../lib/mappers";
 
 interface RoadmapContextValue {
   roadmapTasks: RoadmapTask[];
@@ -10,7 +10,7 @@ interface RoadmapContextValue {
 
 const RoadmapContext = createContext<RoadmapContextValue | undefined>(undefined);
 
-export function RoadmapProvider({ children }: { children: React.ReactNode }) {
+export function RoadmapProvider({ children }: { children: React.ReactNode; }) {
   const { user } = useAuth();
   const [roadmapTasks, setRoadmapTasks] = useState<RoadmapTask[]>([]);
 
@@ -22,13 +22,14 @@ export function RoadmapProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
     const load = async () => {
       try {
-        const { data, error } = await supabase.from(TABLES.roadmapTasks).select("*");
+        const response = await databases.listDocuments(
+          DATABASE_ID,
+          COLLECTIONS.roadmapTasks,
+          [queryByUserId(user.$id)]
+        );
         if (cancelled) return;
-        if (error) {
-          console.error("Error loading roadmap tasks:", error);
-          return;
-        }
-        setRoadmapTasks((data || []) as RoadmapTask[]);
+
+        setRoadmapTasks(response.documents.map(mapRoadmapTaskFromDocument));
       } catch (err) {
         if (!cancelled) console.error("Unexpected error loading roadmap tasks:", err);
       }

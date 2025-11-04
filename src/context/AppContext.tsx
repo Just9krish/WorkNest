@@ -1,5 +1,4 @@
 import React, { createContext, useContext, ReactNode } from "react";
-import { Session, User } from "@supabase/supabase-js";
 import { Block, CalendarEvent, Page, Profile, RoadmapTask, Template, Workspace } from "../types";
 import { useAuth } from "./auth-context";
 import { useUi } from "./ui-context";
@@ -8,12 +7,12 @@ import { useBlocks } from "./blocks-context";
 import { useRoadmap } from "./roadmap-context";
 import { useCalendar } from "./calendar-context";
 import { useTemplates } from "./templates-context";
+import { Models } from "appwrite";
 
 // Legacy aggregator only
 
 interface AppContextType {
-  session: Session | null;
-  user: User | null;
+  user: Models.User<Models.Preferences> | null;
   profile: Profile | null;
   workspace: Workspace | null;
   pages: Page[];
@@ -66,9 +65,9 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const AppProvider: React.FC<{ children: ReactNode; }> = ({ children }) => {
   // Compose from modular contexts
-  const { session, user, profile, workspace, isAuthLoading, signOut } = useAuth();
+  const { user, profile, workspace, isAuthLoading, signOut } = useAuth();
   const { isSidebarCollapsed, toggleSidebar } = useUi();
   const { pages, selectedPageId, selectPage, addPage, updatePage, deletePage, togglePageExpansion } = usePages();
   const { blocks, getPageBlocks, getChildBlocks, addBlock, updateBlock, deleteBlock, toggleBlockExpansion } =
@@ -82,7 +81,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   return (
     <AppContext.Provider
       value={{
-        session,
         user,
         profile,
         workspace,
@@ -108,9 +106,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         updateBlock,
         deleteBlock,
         toggleBlockExpansion,
-        addRoadmapTask: async () => {},
-        updateRoadmapTask: async () => {},
-        deleteRoadmapTask: async () => {},
+        addRoadmapTask: async () => { },
+        updateRoadmapTask: async () => { },
+        deleteRoadmapTask: async () => { },
         addCalendarEvent,
         updateCalendarEvent,
         deleteCalendarEvent,

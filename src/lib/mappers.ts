@@ -1,44 +1,73 @@
-import { Block, Page, CalendarEvent } from "../types";
+import { Block, Page, CalendarEvent, RoadmapTask, Profile } from "../types";
 
-export function mapPageFromRow(row: Record<string, unknown>): Page {
+export function mapPageFromDocument(doc: any): Page {
   return {
-    id: row.id as string,
-    createdAt: row.created_at as string,
-    title: (row.title as string) || "",
-    icon: (row.icon as string) || "",
-    parentId: (row.parent_id as string) || null,
-    isExpanded: Boolean(row.is_expanded),
-    userId: row.user_id as string,
+    $id: doc.$id,
+    $createdAt: doc.$createdAt,
+    $updatedAt: doc.$updatedAt,
+    title: doc.title || "",
+    icon: doc.icon || null,
+    parentId: doc.parentId || null,
+    isExpanded: Boolean(doc.isExpanded),
+    userId: doc.userId,
   };
 }
 
-export function mapBlockFromRow(row: Record<string, unknown>): Block {
+export function mapBlockFromDocument(doc: any): Block {
   return {
-    id: row.id as string,
-    createdAt: row.created_at as string,
-    pageId: row.page_id as string,
-    userId: row.user_id as string,
-    type: row.type as Block["type"],
-    content: (row.content as string) || "",
-    parentBlockId: (row.parent_block_id as string) || null,
-    checked: (row.checked as boolean) ?? null,
-    src: (row.src as string) || undefined,
-    language: (row.language as string) || undefined,
-    isExpanded: Boolean(row.is_expanded),
+    $id: doc.$id,
+    $createdAt: doc.$createdAt,
+    $updatedAt: doc.$updatedAt,
+    pageId: doc.pageId,
+    userId: doc.userId,
+    type: doc.type,
+    content: doc.content || "",
+    parentBlockId: doc.parentBlockId || null,
+    checked: doc.checked ?? null,
+    src: doc.src || undefined,
+    language: doc.language || undefined,
+    isExpanded: Boolean(doc.isExpanded),
   };
 }
 
-export function mapCalendarEventFromRow(row: Record<string, unknown>): CalendarEvent {
+export function mapCalendarEventFromDocument(doc: any): CalendarEvent {
   return {
-    id: row.id as string,
-    createdAt: row.created_at as string,
-    userId: row.user_id as string,
-    title: (row.title as string) || "",
-    date: (row.date as string) || "",
-    time: (row.time as string) || null,
-    tag: (row.tag as string) || "",
-    color: (row.color as string) || "",
-    description: (row.description as string) || null, // Will be null until migration is applied
+    $id: doc.$id,
+    $createdAt: doc.$createdAt,
+    $updatedAt: doc.$updatedAt,
+    userId: doc.userId,
+    title: doc.title || "",
+    date: doc.date || "",
+    time: doc.time || null,
+    tag: doc.tag || "",
+    color: doc.color || "",
+    description: doc.description || null,
+  };
+}
+
+export function mapRoadmapTaskFromDocument(doc: any): RoadmapTask {
+  return {
+    $id: doc.$id,
+    $createdAt: doc.$createdAt,
+    $updatedAt: doc.$updatedAt,
+    userId: doc.userId,
+    title: doc.title || "",
+    description: doc.description || null,
+    category: doc.category,
+    startDate: doc.startDate || null,
+    endDate: doc.endDate || null,
+    progress: doc.progress || 0,
+    status: doc.status,
+  };
+}
+
+export function mapProfileFromDocument(doc: any): Profile {
+  return {
+    $id: doc.$id,
+    $createdAt: doc.$createdAt,
+    $updatedAt: doc.$updatedAt,
+    username: doc.username || null,
+    avatarUrl: doc.avatarUrl || null,
   };
 }
 

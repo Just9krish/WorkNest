@@ -15,14 +15,14 @@ import { ThemeProvider } from "./context/ThemeContext";
 import { ModeToggle } from "./components/ui/mode-toggle";
 
 const AppContent: React.FC = () => {
-  const { isLoading, session } = useApp();
+  const { isLoading, user } = useApp();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isLoading && !session) {
+    if (!isLoading && !user) {
       navigate("/login");
     }
-  }, [isLoading, session, navigate]);
+  }, [isLoading, user, navigate]);
 
   if (isLoading) {
     return (
@@ -35,7 +35,7 @@ const AppContent: React.FC = () => {
     );
   }
 
-  if (!session) {
+  if (!user) {
     return null; // or a minimal loading state, as navigation will occur
   }
 
