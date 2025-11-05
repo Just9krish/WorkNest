@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { CalendarEvent } from "../types";
-import { databases, DATABASE_ID, COLLECTIONS, queryByUserId } from "../lib/appwrite";
+import { listRows, createRow, updateRow, deleteRow, TABLES, queryByUserId } from "../lib/appwrite";
 import { useAuth } from "./auth-context";
 import { mapCalendarEventFromDocument } from "../lib/mappers";
 import { ID } from "appwrite";
@@ -26,14 +26,13 @@ export function CalendarProvider({ children }: { children: React.ReactNode; }) {
     let cancelled = false;
     const load = async () => {
       try {
-        const response = await databases.listDocuments(
-          DATABASE_ID,
-          COLLECTIONS.calendarEvents,
+        const response = await listRows(
+          TABLES.calendarEvents,
           [queryByUserId(user.$id)]
         );
         if (cancelled) return;
 
-        setCalendarEvents(response.documents.map(mapCalendarEventFromDocument));
+        setCalendarEvents(response.rows.map(mapCalendarEventFromDocument));
       } catch (err) {
         if (!cancelled) console.error("Unexpected error loading calendar events:", err);
       }
@@ -49,10 +48,8 @@ export function CalendarProvider({ children }: { children: React.ReactNode; }) {
     async (event: Omit<CalendarEvent, "$id" | "userId" | "$createdAt" | "$updatedAt">) => {
       if (!user) throw new Error("User not authenticated");
       try {
-        await databases.createDocument(
-          DATABASE_ID,
-          COLLECTIONS.calendarEvents,
-          ID.unique(),
+        await createRow(
+          TABLES.calendarEvents,
           {
             userId: user.$id,
             title: event.title,
@@ -61,7 +58,8 @@ export function CalendarProvider({ children }: { children: React.ReactNode; }) {
             tag: event.tag,
             color: event.color,
             description: event.description,
-          }
+          },
+          ID.unique()
         );
       } catch (error) {
         throw error;
@@ -73,7 +71,7 @@ export function CalendarProvider({ children }: { children: React.ReactNode; }) {
   const updateCalendarEvent = useCallback(
     async (eventId: string, updates: Partial<CalendarEvent>) => {
       try {
-        await databases.updateDocument(DATABASE_ID, COLLECTIONS.calendarEvents, eventId, updates);
+        await updateRow(TABLES.calendarEvents, eventId, updates);
       } catch (error) {
         throw error;
       }
@@ -83,7 +81,7 @@ export function CalendarProvider({ children }: { children: React.ReactNode; }) {
 
   const deleteCalendarEvent = useCallback(async (eventId: string) => {
     try {
-      await databases.deleteDocument(DATABASE_ID, COLLECTIONS.calendarEvents, eventId);
+      await deleteRow(TABLES.calendarEvents, eventId);
     } catch (error) {
       throw error;
     }

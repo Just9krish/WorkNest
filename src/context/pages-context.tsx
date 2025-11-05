@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Page } from "../types";
-import { databases, DATABASE_ID, COLLECTIONS, queryByUserId, queryOrderByCreatedAt } from "../lib/appwrite";
+import { listRows, createRow, updateRow, deleteRow, TABLES, queryByUserId, queryOrderByCreatedAt } from "../lib/appwrite";
 import { useAuth } from "./auth-context";
 import { mapPageFromDocument } from "../lib/mappers";
 import { ID } from "appwrite";
@@ -35,14 +35,13 @@ export function PagesProvider({ children }: { children: React.ReactNode; }) {
     let cancelled = false;
     const load = async () => {
       try {
-        const response = await databases.listDocuments(
-          DATABASE_ID,
-          COLLECTIONS.pages,
+        const response = await listRows(
+          TABLES.pages,
           [queryByUserId(user.$id), queryOrderByCreatedAt]
         );
         if (cancelled) return;
 
-        const mapped = response.documents.map(mapPageFromDocument);
+        const mapped = response.rows.map(mapPageFromDocument);
         setPages(mapped);
         if (mapped.length > 0) setSelectedPageId(mapped[0].$id);
       } catch (err) {
@@ -64,17 +63,16 @@ export function PagesProvider({ children }: { children: React.ReactNode; }) {
     async (parentId: string | null = null) => {
       if (!user) return;
       try {
-        const newPage = await databases.createDocument(
-          DATABASE_ID,
-          COLLECTIONS.pages,
-          ID.unique(),
+        const newPage = await createRow(
+          TABLES.pages,
           {
             title: "Untitled",
             userId: user.$id,
             parentId: parentId,
             icon: "📄",
             isExpanded: false
-          }
+          },
+          ID.unique()
         );
         setSelectedPageId(newPage.$id);
       } catch (error) {
@@ -90,7 +88,7 @@ export function PagesProvider({ children }: { children: React.ReactNode; }) {
       updates: Partial<Omit<Page, "$id" | "userId" | "$createdAt" | "$updatedAt">>
     ) => {
       try {
-        await databases.updateDocument(DATABASE_ID, COLLECTIONS.pages, pageId, updates);
+        await updateRow(TABLES.pages, pageId, updates);
       } catch (error) {
         console.error("Error updating page:", error);
       }
@@ -100,7 +98,7 @@ export function PagesProvider({ children }: { children: React.ReactNode; }) {
 
   const deletePage = useCallback(async (pageId: string) => {
     try {
-      await databases.deleteDocument(DATABASE_ID, COLLECTIONS.pages, pageId);
+      await deleteRow(TABLES.pages, pageId);
     } catch (error) {
       console.error("Error deleting page:", error);
     }

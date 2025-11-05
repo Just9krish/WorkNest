@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Block } from "../types";
-import { databases, DATABASE_ID, COLLECTIONS, queryByUserId } from "../lib/appwrite";
+import { listRows, createRow, updateRow, deleteRow, TABLES, queryByUserId } from "../lib/appwrite";
 import { useAuth } from "./auth-context";
 import { mapBlockFromDocument } from "../lib/mappers";
 import { ID } from "appwrite";
@@ -29,14 +29,13 @@ export function BlocksProvider({ children }: { children: React.ReactNode; }) {
     let cancelled = false;
     const load = async () => {
       try {
-        const response = await databases.listDocuments(
-          DATABASE_ID,
-          COLLECTIONS.blocks,
+        const response = await listRows(
+          TABLES.blocks,
           [queryByUserId(user.$id)]
         );
         if (cancelled) return;
 
-        setBlocks(response.documents.map(mapBlockFromDocument));
+        setBlocks(response.rows.map(mapBlockFromDocument));
       } catch (err) {
         if (!cancelled) console.error("Unexpected error loading blocks:", err);
       }
@@ -68,17 +67,16 @@ export function BlocksProvider({ children }: { children: React.ReactNode; }) {
     async (pageId: string, _afterBlockId?: string, parentBlockId?: string): Promise<Block> => {
       if (!user) throw new Error("User not authenticated");
       try {
-        const newBlock = await databases.createDocument(
-          DATABASE_ID,
-          COLLECTIONS.blocks,
-          ID.unique(),
+        const newBlock = await createRow(
+          TABLES.blocks,
           {
             pageId,
             userId: user.$id,
             parentBlockId: parentBlockId || null,
             type: "text",
             content: ""
-          }
+          },
+          ID.unique()
         );
         return mapBlockFromDocument(newBlock);
       } catch (error) {
@@ -90,7 +88,7 @@ export function BlocksProvider({ children }: { children: React.ReactNode; }) {
 
   const updateBlock = useCallback(async (blockId: string, updates: Partial<Block>) => {
     try {
-      await databases.updateDocument(DATABASE_ID, COLLECTIONS.blocks, blockId, updates);
+      await updateRow(TABLES.blocks, blockId, updates);
     } catch (error) {
       console.error("Error updating block:", error);
     }
@@ -98,7 +96,7 @@ export function BlocksProvider({ children }: { children: React.ReactNode; }) {
 
   const deleteBlock = useCallback(async (blockId: string) => {
     try {
-      await databases.deleteDocument(DATABASE_ID, COLLECTIONS.blocks, blockId);
+      await deleteRow(TABLES.blocks, blockId);
     } catch (error) {
       console.error("Error deleting block:", error);
     }

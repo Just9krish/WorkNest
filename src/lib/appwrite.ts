@@ -1,4 +1,4 @@
-import { Client, Account, Databases, ID, Query } from "appwrite";
+import { Client, Account, TablesDB, ID, Query } from "appwrite";
 
 const appwriteUrl = import.meta.env.VITE_APPWRITE_ENDPOINT;
 const appwriteProjectId = import.meta.env.VITE_APPWRITE_PROJECT_ID;
@@ -14,11 +14,11 @@ export const client = new Client()
 
 // Initialize services
 export const account = new Account(client);
-export const databases = new Databases(client);
+export const tablesDB = new TablesDB(client);
 
-// Database and Collection IDs
+// Database and Table IDs (TablesDB API uses "tables" instead of "collections")
 export const DATABASE_ID = "6900f122003c5eb510b4";
-export const COLLECTIONS = {
+export const TABLES = {
     pages: "pages",
     blocks: "blocks",
     profiles: "profiles",
@@ -26,53 +26,62 @@ export const COLLECTIONS = {
     roadmapTasks: "roadmap_tasks",
 } as const;
 
-// Helper functions for common operations
-export const createDocument = async (
-    collectionId: string,
+// Helper functions for common operations using TablesDB API
+export const createRow = async (
+    tableId: string,
     data: Record<string, unknown>,
-    documentId?: string
+    rowId?: string
 ) => {
-    return await databases.createDocument(
-        DATABASE_ID,
-        collectionId,
-        documentId || ID.unique(),
-        data
-    );
+    return await tablesDB.createRow({
+        databaseId: DATABASE_ID,
+        tableId: tableId,
+        rowId: rowId || ID.unique(),
+        data: data,
+    });
 };
 
-export const getDocument = async (
-    collectionId: string,
-    documentId: string
-) => {
-    return await databases.getDocument(DATABASE_ID, collectionId, documentId);
+export const getRow = async (tableId: string, rowId: string) => {
+    return await tablesDB.getRow({
+        databaseId: DATABASE_ID,
+        tableId: tableId,
+        rowId: rowId,
+    });
 };
 
-export const updateDocument = async (
-    collectionId: string,
-    documentId: string,
+export const updateRow = async (
+    tableId: string,
+    rowId: string,
     data: Record<string, unknown>
 ) => {
-    return await databases.updateDocument(DATABASE_ID, collectionId, documentId, data);
+    return await tablesDB.updateRow({
+        databaseId: DATABASE_ID,
+        tableId: tableId,
+        rowId: rowId,
+        data: data,
+    });
 };
 
-export const deleteDocument = async (
-    collectionId: string,
-    documentId: string
-) => {
-    return await databases.deleteDocument(DATABASE_ID, collectionId, documentId);
+export const deleteRow = async (tableId: string, rowId: string) => {
+    return await tablesDB.deleteRow({
+        databaseId: DATABASE_ID,
+        tableId: tableId,
+        rowId: rowId,
+    });
 };
 
-export const listDocuments = async (
-    collectionId: string,
-    queries?: string[]
-) => {
-    return await databases.listDocuments(DATABASE_ID, collectionId, queries);
+export const listRows = async (tableId: string, queries?: string[]) => {
+    return await tablesDB.listRows({
+        databaseId: DATABASE_ID,
+        tableId: tableId,
+        queries: queries,
+    });
 };
 
 // Query helpers
 export const queryByUserId = (userId: string) => Query.equal("userId", userId);
 export const queryByPageId = (pageId: string) => Query.equal("pageId", pageId);
-export const queryByParentId = (parentId: string) => Query.equal("parentId", parentId);
+export const queryByParentId = (parentId: string) =>
+    Query.equal("parentId", parentId);
 export const queryByDate = (date: string) => Query.equal("date", date);
 export const queryOrderByCreatedAt = Query.orderDesc("$createdAt");
 export const queryOrderByTitle = Query.orderAsc("title");

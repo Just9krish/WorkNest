@@ -1,5 +1,5 @@
 import { Models, OAuthProvider } from "appwrite";
-import { account, databases, DATABASE_ID, COLLECTIONS } from "./appwrite";
+import { account, getRow, updateRow, TABLES } from "./appwrite";
 import { mapProfileFromDocument } from "./mappers";
 import { Profile } from "../types";
 
@@ -121,11 +121,7 @@ export async function signOut(): Promise<void> {
 
 export async function getUserProfile(userId: string): Promise<Profile | null> {
   try {
-    const profile = await databases.getDocument(
-      DATABASE_ID,
-      COLLECTIONS.profiles,
-      userId
-    );
+    const profile = await getRow(TABLES.profiles, userId);
     return mapProfileFromDocument(profile);
   } catch (error) {
     console.error("Error getting user profile:", error);
@@ -135,12 +131,7 @@ export async function getUserProfile(userId: string): Promise<Profile | null> {
 
 export async function updateUserProfile(userId: string, data: Partial<Profile>): Promise<Profile> {
   try {
-    const updatedProfile = await databases.updateDocument(
-      DATABASE_ID,
-      COLLECTIONS.profiles,
-      userId,
-      data
-    );
+    const updatedProfile = await updateRow(TABLES.profiles, userId, data);
     return mapProfileFromDocument(updatedProfile);
   } catch (error) {
     console.error("Error updating user profile:", error);

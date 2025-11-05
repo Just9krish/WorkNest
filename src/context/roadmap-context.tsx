@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { RoadmapTask } from "../types";
-import { databases, DATABASE_ID, COLLECTIONS, queryByUserId } from "../lib/appwrite";
+import { listRows, TABLES, queryByUserId } from "../lib/appwrite";
 import { useAuth } from "./auth-context";
 import { mapRoadmapTaskFromDocument } from "../lib/mappers";
 
@@ -22,14 +22,13 @@ export function RoadmapProvider({ children }: { children: React.ReactNode; }) {
     let cancelled = false;
     const load = async () => {
       try {
-        const response = await databases.listDocuments(
-          DATABASE_ID,
-          COLLECTIONS.roadmapTasks,
+        const response = await listRows(
+          TABLES.roadmapTasks,
           [queryByUserId(user.$id)]
         );
         if (cancelled) return;
 
-        setRoadmapTasks(response.documents.map(mapRoadmapTaskFromDocument));
+        setRoadmapTasks(response.rows.map(mapRoadmapTaskFromDocument));
       } catch (err) {
         if (!cancelled) console.error("Unexpected error loading roadmap tasks:", err);
       }
