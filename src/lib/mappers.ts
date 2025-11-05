@@ -6,6 +6,7 @@ export function mapPageFromDocument(doc: any): Page {
     $createdAt: doc.$createdAt,
     $updatedAt: doc.$updatedAt,
     title: doc.title || "",
+    slug: doc.slug || "",
     icon: doc.icon || null,
     parentId: doc.parentId || null,
     isExpanded: Boolean(doc.isExpanded),
@@ -70,5 +71,3 @@ export function mapProfileFromDocument(doc: any): Profile {
     avatarUrl: doc.avatarUrl || null,
   };
 }
-
-

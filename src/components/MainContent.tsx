@@ -37,7 +37,7 @@ const MainContent: React.FC = () => {
     }
   }
 
-  const selectedPage = pages.find(page => page.id === selectedPageId);
+  const selectedPage = pages.find(page => page.$id === selectedPageId);
 
   if (!selectedPage) {
     return (
@@ -57,7 +57,7 @@ const MainContent: React.FC = () => {
   }
 
   const handleIconSelect = (icon: string) => {
-    updatePage(selectedPage.id, { icon });
+    updatePage(selectedPage.$id, { icon });
     setIsIconPickerOpen(false);
   };
 
@@ -95,12 +95,12 @@ const MainContent: React.FC = () => {
           {selectedPage.title}
         </h1>
         <p className="text-sm text-muted-foreground">
-          Created on {new Date(selectedPage.createdAt).toLocaleDateString()}
+          Created on {new Date(selectedPage.$createdAt).toLocaleDateString()}
         </p>
       </div>
 
       <div className="px-4 py-6 max-w-4xl mx-auto">
-        <BlockEditor key={selectedPage.id} pageId={selectedPage.id} />
+        <BlockEditor key={selectedPage.$id} pageId={selectedPage.$id} />
       </div>
     </div>
   );

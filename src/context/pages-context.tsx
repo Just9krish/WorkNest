@@ -1,8 +1,25 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { Page } from "../types";
-import { listRows, createRow, updateRow, deleteRow, TABLES, queryByUserId, queryOrderByCreatedAt } from "../lib/appwrite";
+import {
+  listRows,
+  createRow,
+  updateRow,
+  deleteRow,
+  TABLES,
+  queryByUserId,
+  queryBySlug,
+  queryOrderByCreatedAt,
+} from "../lib/appwrite";
 import { useAuth } from "./auth-context";
 import { mapPageFromDocument } from "../lib/mappers";
+import { generateSlug, generateUniqueSlug } from "../lib/slug";
 import { ID } from "appwrite";
 
 interface PagesContextValue {
@@ -16,11 +33,12 @@ interface PagesContextValue {
   ) => Promise<void>;
   deletePage: (pageId: string) => Promise<void>;
   togglePageExpansion: (pageId: string) => void;
+  getPageBySlug: (slug: string) => Promise<Page | null>;
 }
 
 const PagesContext = createContext<PagesContextValue | undefined>(undefined);
 
-export function PagesProvider({ children }: { children: React.ReactNode; }) {
+export function PagesProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [pages, setPages] = useState<Page[]>([]);
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
@@ -35,15 +53,14 @@ export function PagesProvider({ children }: { children: React.ReactNode; }) {
     let cancelled = false;
     const load = async () => {
       try {
-        const response = await listRows(
-          TABLES.pages,
-          [queryByUserId(user.$id), queryOrderByCreatedAt]
-        );
+        const response = await listRows(TABLES.pages, [
+          queryByUserId(user.$id),
+          queryOrderByCreatedAt,
+        ]);
         if (cancelled) return;
 
         const mapped = response.rows.map(mapPageFromDocument);
         setPages(mapped);
-        if (mapped.length > 0) setSelectedPageId(mapped[0].$id);
       } catch (err) {
         if (!cancelled) console.error("Unexpected error loading pages:", err);
       }
@@ -63,37 +80,55 @@ export function PagesProvider({ children }: { children: React.ReactNode; }) {
     async (parentId: string | null = null) => {
       if (!user) return;
       try {
+        // Generate unique slug
+        const baseSlug = generateSlug("Untitled");
+        const existingSlugs = pages.map(p => p.slug);
+        const uniqueSlug = generateUniqueSlug(baseSlug, existingSlugs);
+
         const newPage = await createRow(
           TABLES.pages,
           {
             title: "Untitled",
+            slug: uniqueSlug,
             userId: user.$id,
             parentId: parentId,
             icon: "📄",
-            isExpanded: false
+            isExpanded: false,
           },
           ID.unique()
         );
-        setSelectedPageId(newPage.$id);
+        const mappedPage = mapPageFromDocument(newPage);
+        setSelectedPageId(mappedPage.$id);
       } catch (error) {
         console.error("Error adding page:", error);
       }
     },
-    [user]
+    [user, pages]
   );
 
   const updatePage = useCallback(
     async (
       pageId: string,
-      updates: Partial<Omit<Page, "$id" | "userId" | "$createdAt" | "$updatedAt">>
+      updates: Partial<
+        Omit<Page, "$id" | "userId" | "$createdAt" | "$updatedAt">
+      >
     ) => {
       try {
+        // If title is being updated, also update the slug
+        if (updates.title !== undefined) {
+          const baseSlug = generateSlug(updates.title);
+          const existingSlugs = pages
+            .filter(p => p.$id !== pageId)
+            .map(p => p.slug);
+          updates.slug = generateUniqueSlug(baseSlug, existingSlugs);
+        }
+
         await updateRow(TABLES.pages, pageId, updates);
       } catch (error) {
         console.error("Error updating page:", error);
       }
     },
-    []
+    [pages]
   );
 
   const deletePage = useCallback(async (pageId: string) => {
@@ -112,12 +147,52 @@ export function PagesProvider({ children }: { children: React.ReactNode; }) {
     [pages, updatePage]
   );
 
-  const value = useMemo(
-    () => ({ pages, selectedPageId, selectPage, addPage, updatePage, deletePage, togglePageExpansion }),
-    [pages, selectedPageId, selectPage, addPage, updatePage, deletePage, togglePageExpansion]
+  const getPageBySlug = useCallback(
+    async (slug: string): Promise<Page | null> => {
+      if (!user) return null;
+      try {
+        const response = await listRows(TABLES.pages, [
+          queryByUserId(user.$id),
+          queryBySlug(slug),
+        ]);
+        if (response.rows.length > 0) {
+          return mapPageFromDocument(response.rows[0]);
+        }
+        return null;
+      } catch (error) {
+        console.error("Error getting page by slug:", error);
+        return null;
+      }
+    },
+    [user]
   );
 
-  return <PagesContext.Provider value={value}>{children}</PagesContext.Provider>;
+  const value = useMemo(
+    () => ({
+      pages,
+      selectedPageId,
+      selectPage,
+      addPage,
+      updatePage,
+      deletePage,
+      togglePageExpansion,
+      getPageBySlug,
+    }),
+    [
+      pages,
+      selectedPageId,
+      selectPage,
+      addPage,
+      updatePage,
+      deletePage,
+      togglePageExpansion,
+      getPageBySlug,
+    ]
+  );
+
+  return (
+    <PagesContext.Provider value={value}>{children}</PagesContext.Provider>
+  );
 }
 
 export function usePages() {
@@ -125,5 +200,3 @@ export function usePages() {
   if (!ctx) throw new Error("usePages must be used within PagesProvider");
   return ctx;
 }
-
-

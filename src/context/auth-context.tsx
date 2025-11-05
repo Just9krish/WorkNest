@@ -1,6 +1,17 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { Models } from "appwrite";
-import { getCurrentUser, getUserProfile, signOut, handleOAuthCallback } from "../lib/auth";
+import {
+  getCurrentUser,
+  getUserProfile,
+  signOut,
+  handleOAuthCallback,
+} from "../lib/auth";
 import { Profile, Workspace } from "../types";
 
 interface AuthContextValue {
@@ -13,9 +24,11 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode; }) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthLoading, setIsAuthLoading] = useState(false);
-  const [user, setUser] = useState<Models.User<Models.Preferences> | null>(null);
+  const [user, setUser] = useState<Models.User<Models.Preferences> | null>(
+    null
+  );
   const [profile, setProfile] = useState<Profile | null>(null);
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
 
@@ -58,7 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode; }) {
           setProfile(userProfile);
           setWorkspace({
             id: userProfile.$id,
-            name: userProfile.username || "My Workspace"
+            name: userProfile.username || "My Workspace",
           });
         }
       } catch (error) {
@@ -98,5 +111,3 @@ export function useAuth() {
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");
   return ctx;
 }
-
-

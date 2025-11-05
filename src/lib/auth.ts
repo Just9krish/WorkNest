@@ -11,7 +11,7 @@ export async function getCurrentUser(): Promise<Models.User<Models.Preferences> 
     // The "missing scope (account)" error is expected when there's no active session
     // This is a normal way to check if a user is logged in
     const errorMessage = error instanceof Error ? error.message : String(error);
-    const errorCode = (error as { code?: number; })?.code;
+    const errorCode = (error as { code?: number })?.code;
 
     if (errorCode === 401 || errorMessage.includes("missing scope")) {
       // No active session - this is expected, not an error
@@ -28,7 +28,8 @@ export async function signInWithOAuth(
   redirectTo: string
 ): Promise<void> {
   try {
-    const providerEnum = provider === "github" ? OAuthProvider.Github : OAuthProvider.Google;
+    const providerEnum =
+      provider === "github" ? OAuthProvider.Github : OAuthProvider.Google;
     await account.createOAuth2Token({
       provider: providerEnum,
       success: redirectTo,
@@ -61,7 +62,8 @@ export async function handleOAuthCallback(): Promise<Models.Session | null> {
     const userId = urlParams.get("userId") || hashParams.get("userId");
 
     // Also check for alternative parameter names
-    const sessionSecret = urlParams.get("sessionSecret") || hashParams.get("sessionSecret");
+    const sessionSecret =
+      urlParams.get("sessionSecret") || hashParams.get("sessionSecret");
     const sessionId = urlParams.get("sessionId") || hashParams.get("sessionId");
 
     // If we have OAuth callback parameters, create a session
@@ -71,7 +73,10 @@ export async function handleOAuthCallback(): Promise<Models.Session | null> {
     if (finalSecret && finalUserId) {
       try {
         // Create session from OAuth token
-        const session = await account.createSession({ userId: finalUserId, secret: finalSecret });
+        const session = await account.createSession({
+          userId: finalUserId,
+          secret: finalSecret,
+        });
 
         // Clean up URL parameters
         const url = new URL(window.location.href);
@@ -113,7 +118,7 @@ export async function handleOAuthCallback(): Promise<Models.Session | null> {
 
 export async function signOut(): Promise<void> {
   try {
-    await account.deleteSession({ sessionId: 'current' });
+    await account.deleteSession({ sessionId: "current" });
   } catch (error) {
     console.error("Error during sign out:", error);
   }
@@ -129,7 +134,10 @@ export async function getUserProfile(userId: string): Promise<Profile | null> {
   }
 }
 
-export async function updateUserProfile(userId: string, data: Partial<Profile>): Promise<Profile> {
+export async function updateUserProfile(
+  userId: string,
+  data: Partial<Profile>
+): Promise<Profile> {
   try {
     const updatedProfile = await updateRow(TABLES.profiles, userId, data);
     return mapProfileFromDocument(updatedProfile);
@@ -138,5 +146,3 @@ export async function updateUserProfile(userId: string, data: Partial<Profile>):
     throw error;
   }
 }
-
-

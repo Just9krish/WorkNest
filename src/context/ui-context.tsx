@@ -1,4 +1,10 @@
-import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
 
 interface UiContextValue {
   isSidebarCollapsed: boolean;
@@ -10,7 +16,10 @@ const UiContext = createContext<UiContextValue | undefined>(undefined);
 export function UiProvider({ children }: { children: React.ReactNode }) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  const toggleSidebar = useCallback(() => setIsSidebarCollapsed(prev => !prev), []);
+  const toggleSidebar = useCallback(
+    () => setIsSidebarCollapsed(prev => !prev),
+    []
+  );
 
   const value = useMemo(
     () => ({ isSidebarCollapsed, toggleSidebar }),
@@ -25,5 +34,3 @@ export function useUi() {
   if (!ctx) throw new Error("useUi must be used within UiProvider");
   return ctx;
 }
-
-

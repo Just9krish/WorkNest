@@ -1,5 +1,13 @@
 import React, { createContext, useContext, ReactNode } from "react";
-import { Block, CalendarEvent, Page, Profile, RoadmapTask, Template, Workspace } from "../types";
+import {
+  Block,
+  CalendarEvent,
+  Page,
+  Profile,
+  RoadmapTask,
+  Template,
+  Workspace,
+} from "../types";
 import { useAuth } from "./auth-context";
 import { useUi } from "./ui-context";
 import { usePages } from "./pages-context";
@@ -65,15 +73,37 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-export const AppProvider: React.FC<{ children: ReactNode; }> = ({ children }) => {
+export const AppProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   // Compose from modular contexts
   const { user, profile, workspace, isAuthLoading, signOut } = useAuth();
   const { isSidebarCollapsed, toggleSidebar } = useUi();
-  const { pages, selectedPageId, selectPage, addPage, updatePage, deletePage, togglePageExpansion } = usePages();
-  const { blocks, getPageBlocks, getChildBlocks, addBlock, updateBlock, deleteBlock, toggleBlockExpansion } =
-    useBlocks();
+  const {
+    pages,
+    selectedPageId,
+    selectPage,
+    addPage,
+    updatePage,
+    deletePage,
+    togglePageExpansion,
+  } = usePages();
+  const {
+    blocks,
+    getPageBlocks,
+    getChildBlocks,
+    addBlock,
+    updateBlock,
+    deleteBlock,
+    toggleBlockExpansion,
+  } = useBlocks();
   const { roadmapTasks } = useRoadmap();
-  const { calendarEvents, addCalendarEvent, updateCalendarEvent, deleteCalendarEvent } = useCalendar();
+  const {
+    calendarEvents,
+    addCalendarEvent,
+    updateCalendarEvent,
+    deleteCalendarEvent,
+  } = useCalendar();
   const { templates, selectedTemplateId, selectTemplate } = useTemplates();
 
   const isLoading = isAuthLoading; // Extend later if needed
@@ -106,9 +136,9 @@ export const AppProvider: React.FC<{ children: ReactNode; }> = ({ children }) =>
         updateBlock,
         deleteBlock,
         toggleBlockExpansion,
-        addRoadmapTask: async () => { },
-        updateRoadmapTask: async () => { },
-        deleteRoadmapTask: async () => { },
+        addRoadmapTask: async () => {},
+        updateRoadmapTask: async () => {},
+        deleteRoadmapTask: async () => {},
         addCalendarEvent,
         updateCalendarEvent,
         deleteCalendarEvent,

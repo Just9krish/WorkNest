@@ -1,5 +1,9 @@
 import React, { useEffect } from "react";
-import { getCurrentUser, signInWithOAuth, handleOAuthCallback } from "../lib/auth";
+import {
+  getCurrentUser,
+  signInWithOAuth,
+  handleOAuthCallback,
+} from "../lib/auth";
 import { useNavigate } from "react-router-dom";
 import { Chrome, LoaderCircle } from "lucide-react";
 import { Button } from "./ui/button";

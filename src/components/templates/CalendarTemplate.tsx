@@ -65,8 +65,8 @@ const CalendarTemplate: React.FC = () => {
 
   const formatDate = (date: Date) => {
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
 
@@ -75,10 +75,10 @@ const CalendarTemplate: React.FC = () => {
   };
 
   const handleDateClick = (day: number) => {
-    console.log('Date clicked:', day);
+    console.log("Date clicked:", day);
     const clickedDate = new Date(currentYear, currentMonth, day);
     const dateString = formatDate(clickedDate);
-    console.log('Formatted date:', dateString);
+    console.log("Formatted date:", dateString);
     setSelectedDate(dateString);
     setShowAddModal(true);
   };
@@ -293,8 +293,8 @@ const EventModal: React.FC<{
 
   const formatDate = (date: Date) => {
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
   const [formData, setFormData] = useState({

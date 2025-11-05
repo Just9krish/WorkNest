@@ -41,7 +41,7 @@ const AppSidebar: React.FC = () => {
 
   const handlePageTitleEdit = (page: Page) => {
     if (state !== "collapsed") {
-      setEditingPageId(page.id);
+      setEditingPageId(page.$id);
       setEditingPageTitle(page.title);
     }
   };
@@ -77,21 +77,26 @@ const AppSidebar: React.FC = () => {
   };
 
   const renderPage = (page: Page, level: number = 0) => {
-    const children = getChildPages(page.id);
-    const hasChildPages = hasChildren(page.id);
-    const isSelected = selectedPageId === page.id;
+    const children = getChildPages(page.$id);
+    const hasChildPages = hasChildren(page.$id);
+    const isSelected = selectedPageId === page.$id;
     const isExpanded = page.isExpanded;
-    const isEditing = editingPageId === page.id;
+    const isEditing = editingPageId === page.$id;
 
     if (state === "collapsed" && level > 0) {
       return null;
     }
 
     return (
-      <SidebarMenuItem key={page.id}>
+      <SidebarMenuItem key={page.$id}>
         <SidebarMenuButton
           isActive={isSelected}
-          onClick={() => !isEditing && selectPage(page.id)}
+          onClick={() => {
+            if (!isEditing) {
+              selectPage(page.$id);
+              navigate(`/page/${page.slug}`);
+            }
+          }}
           tooltip={state === "collapsed" ? page.title : undefined}
         >
           {page.icon ? (
@@ -130,10 +135,13 @@ const AppSidebar: React.FC = () => {
         {state !== "collapsed" && hasChildPages && isExpanded && (
           <SidebarMenuSub>
             {children.map(child => (
-              <SidebarMenuSubItem key={child.id}>
+              <SidebarMenuSubItem key={child.$id}>
                 <SidebarMenuSubButton
-                  isActive={selectedPageId === child.id}
-                  onClick={() => selectPage(child.id)}
+                  isActive={selectedPageId === child.$id}
+                  onClick={() => {
+                    selectPage(child.$id);
+                    navigate(`/page/${child.slug}`);
+                  }}
                 >
                   {child.icon ? (
                     <span className="text-sm">{child.icon}</span>
@@ -202,7 +210,10 @@ const AppSidebar: React.FC = () => {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              onClick={() => addPage()}
+              onClick={async () => {
+                await addPage();
+                // Navigation will happen via the page selection in the context
+              }}
               tooltip={state === "collapsed" ? "Add Page" : undefined}
             >
               <Plus size={16} />

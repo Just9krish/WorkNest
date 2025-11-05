@@ -1,9 +1,10 @@
 import React, { useEffect } from "react";
-import { Routes, Route, useNavigate } from "react-router-dom";
+import { Routes, Route, useNavigate, Outlet } from "react-router-dom";
 import { AppProvider, useApp } from "./context/AppContext";
 import { RootProviders } from "./context/RootProviders";
 import AppSidebar from "./components/AppSidebar";
 import MainContent from "./components/MainContent";
+import PageDetail from "./components/PageDetail";
 import AuthComponent from "./components/Auth";
 import { LoaderCircle } from "lucide-react";
 import {
@@ -13,8 +14,9 @@ import {
 } from "./components/ui/sidebar";
 import { ThemeProvider } from "./context/ThemeContext";
 import { ModeToggle } from "./components/ui/mode-toggle";
+import { PageNavigationSync } from "./components/PageNavigationSync";
 
-const AppContent: React.FC = () => {
+const AppLayout: React.FC = () => {
   const { isLoading, user } = useApp();
   const navigate = useNavigate();
 
@@ -41,13 +43,14 @@ const AppContent: React.FC = () => {
 
   return (
     <SidebarProvider defaultOpen={true}>
+      <PageNavigationSync />
       <AppSidebar />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
           <ModeToggle />
         </header>
-        <MainContent />
+        <Outlet />
       </SidebarInset>
     </SidebarProvider>
   );
@@ -60,7 +63,10 @@ const App: React.FC = () => {
         <ThemeProvider defaultTheme="system" storageKey="worknest-theme">
           <Routes>
             <Route path="/login" element={<AuthComponent />} />
-            <Route path="/*" element={<AppContent />} />
+            <Route path="/" element={<AppLayout />}>
+              <Route index element={<MainContent />} />
+              <Route path="page/:slug" element={<PageDetail />} />
+            </Route>
           </Routes>
         </ThemeProvider>
       </AppProvider>

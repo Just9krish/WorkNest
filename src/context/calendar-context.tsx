@@ -1,20 +1,41 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { CalendarEvent } from "../types";
-import { listRows, createRow, updateRow, deleteRow, TABLES, queryByUserId } from "../lib/appwrite";
+import {
+  listRows,
+  createRow,
+  updateRow,
+  deleteRow,
+  TABLES,
+  queryByUserId,
+} from "../lib/appwrite";
 import { useAuth } from "./auth-context";
 import { mapCalendarEventFromDocument } from "../lib/mappers";
 import { ID } from "appwrite";
 
 interface CalendarContextValue {
   calendarEvents: CalendarEvent[];
-  addCalendarEvent: (event: Omit<CalendarEvent, "$id" | "userId" | "$createdAt" | "$updatedAt">) => Promise<void>;
-  updateCalendarEvent: (eventId: string, updates: Partial<CalendarEvent>) => Promise<void>;
+  addCalendarEvent: (
+    event: Omit<CalendarEvent, "$id" | "userId" | "$createdAt" | "$updatedAt">
+  ) => Promise<void>;
+  updateCalendarEvent: (
+    eventId: string,
+    updates: Partial<CalendarEvent>
+  ) => Promise<void>;
   deleteCalendarEvent: (eventId: string) => Promise<void>;
 }
 
-const CalendarContext = createContext<CalendarContextValue | undefined>(undefined);
+const CalendarContext = createContext<CalendarContextValue | undefined>(
+  undefined
+);
 
-export function CalendarProvider({ children }: { children: React.ReactNode; }) {
+export function CalendarProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
 
@@ -26,15 +47,15 @@ export function CalendarProvider({ children }: { children: React.ReactNode; }) {
     let cancelled = false;
     const load = async () => {
       try {
-        const response = await listRows(
-          TABLES.calendarEvents,
-          [queryByUserId(user.$id)]
-        );
+        const response = await listRows(TABLES.calendarEvents, [
+          queryByUserId(user.$id),
+        ]);
         if (cancelled) return;
 
         setCalendarEvents(response.rows.map(mapCalendarEventFromDocument));
       } catch (err) {
-        if (!cancelled) console.error("Unexpected error loading calendar events:", err);
+        if (!cancelled)
+          console.error("Unexpected error loading calendar events:", err);
       }
     };
     load();
@@ -45,7 +66,9 @@ export function CalendarProvider({ children }: { children: React.ReactNode; }) {
   }, [user]);
 
   const addCalendarEvent = useCallback(
-    async (event: Omit<CalendarEvent, "$id" | "userId" | "$createdAt" | "$updatedAt">) => {
+    async (
+      event: Omit<CalendarEvent, "$id" | "userId" | "$createdAt" | "$updatedAt">
+    ) => {
       if (!user) throw new Error("User not authenticated");
       try {
         await createRow(
@@ -88,10 +111,19 @@ export function CalendarProvider({ children }: { children: React.ReactNode; }) {
   }, []);
 
   const value = useMemo(
-    () => ({ calendarEvents, addCalendarEvent, updateCalendarEvent, deleteCalendarEvent }),
+    () => ({
+      calendarEvents,
+      addCalendarEvent,
+      updateCalendarEvent,
+      deleteCalendarEvent,
+    }),
     [calendarEvents, addCalendarEvent, updateCalendarEvent, deleteCalendarEvent]
   );
-  return <CalendarContext.Provider value={value}>{children}</CalendarContext.Provider>;
+  return (
+    <CalendarContext.Provider value={value}>
+      {children}
+    </CalendarContext.Provider>
+  );
 }
 
 export function useCalendar() {
@@ -99,5 +131,3 @@ export function useCalendar() {
   if (!ctx) throw new Error("useCalendar must be used within CalendarProvider");
   return ctx;
 }
-
-

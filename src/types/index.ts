@@ -7,6 +7,7 @@ export interface AppwriteDocument {
 
 export type Page = AppwriteDocument & {
   title: string;
+  slug: string;
   icon: string | null;
   parentId: string | null;
   isExpanded: boolean;

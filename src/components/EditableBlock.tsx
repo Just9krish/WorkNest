@@ -30,7 +30,7 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isTypingRef = useRef(false);
 
-  const childBlocks = block.type === "toggle" ? getChildBlocks(block.id) : [];
+  const childBlocks = block.type === "toggle" ? getChildBlocks(block.$id) : [];
 
   // Sync local content with block content when block changes
   // But only if user is not actively typing
@@ -44,11 +44,11 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
   const debouncedUpdate = useDebounce(
     useCallback(
       (content: string) => {
-        onContentChange(block.id, content);
+        onContentChange(block.$id, content);
         // Mark that we're no longer typing after the update
         isTypingRef.current = false;
       },
-      [block.id, onContentChange]
+      [block.$id, onContentChange]
     ),
     150 // 150ms debounce for better responsiveness
   );
@@ -64,7 +64,7 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
   const handleBlur = () => {
     setIsEditing(false);
     // Ensure final update is sent on blur
-    onContentChange(block.id, localContent);
+    onContentChange(block.$id, localContent);
     // Mark that we're no longer typing
     isTypingRef.current = false;
   };
@@ -86,7 +86,7 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    onKeyDown(e, block.id, block.parentBlockId || undefined);
+    onKeyDown(e, block.$id, block.parentBlockId || undefined);
   };
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,13 +106,13 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
   };
 
   const handleToggleExpansion = () => {
-    toggleBlockExpansion(block.id);
+    toggleBlockExpansion(block.$id);
   };
 
   const handleAddChildBlock = async () => {
-    const newBlock = await addBlock(block.pageId, undefined, block.id);
+    const newBlock = await addBlock(block.pageId, undefined, block.$id);
     setTimeout(() => {
-      const newBlockElement = document.getElementById(`block-${newBlock.id}`);
+      const newBlockElement = document.getElementById(`block-${newBlock.$id}`);
       const input = newBlockElement?.querySelector(
         "input, textarea, [contenteditable]"
       ) as HTMLElement;
@@ -326,7 +326,7 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
           <div className="ml-6 space-y-2">
             {childBlocks.map(childBlock => (
               <EditableBlock
-                key={childBlock.id}
+                key={childBlock.$id}
                 block={childBlock}
                 onContentChange={onContentChange}
                 onKeyDown={onKeyDown}
@@ -420,14 +420,35 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
     }
   };
 
+  // Debug logging
+  useEffect(() => {
+    console.log(
+      "[EditableBlock] Mounting block:",
+      block.$id,
+      block.type,
+      block.content,
+      "block:",
+      block
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [block.$id]);
+
+  const renderedContent = renderBlock();
+  console.log(
+    "[EditableBlock] renderBlock() returned:",
+    renderedContent ? "JSX" : "null",
+    "for block:",
+    block.$id
+  );
+
   return (
     <div
-      id={`block-${block.id}`}
+      id={`block-${block.$id}`}
       className={`group relative rounded-md transition-colors ${
         block.type === "divider" ? "" : "hover:bg-muted/50"
       } ${block.parentBlockId ? "ml-4" : ""}`}
     >
-      {renderBlock()}
+      {renderedContent}
     </div>
   );
 };

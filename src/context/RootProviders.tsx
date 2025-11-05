@@ -24,5 +24,3 @@ export function RootProviders({ children }: { children: React.ReactNode }) {
     </AuthProvider>
   );
 }
-
-

@@ -21,6 +21,13 @@ const BlockEditor: React.FC<BlockEditorProps> = ({ pageId }) => {
 
   const blocks = getPageBlocks(pageId);
 
+  // Debug logging
+  useEffect(() => {
+    console.log("[BlockEditor] pageId:", pageId);
+    console.log("[BlockEditor] blocks:", blocks);
+    console.log("[BlockEditor] blocks.length:", blocks.length);
+  }, [pageId, blocks]);
+
   const blockTypes: BlockType[] = [
     {
       type: "text",
@@ -91,7 +98,7 @@ const BlockEditor: React.FC<BlockEditorProps> = ({ pageId }) => {
     blockId: string,
     parentBlockId?: string
   ) => {
-    const block = blocks.find(b => b.id === blockId);
+    const block = blocks.find(b => b.$id === blockId);
     if (!block) return;
 
     switch (e.key) {
@@ -104,7 +111,7 @@ const BlockEditor: React.FC<BlockEditorProps> = ({ pageId }) => {
           const newBlock = await addBlock(pageId, blockId, parentBlockId);
           setTimeout(() => {
             const newBlockElement = document.getElementById(
-              `block-${newBlock.id}`
+              `block-${newBlock.$id}`
             );
             const input = newBlockElement?.querySelector(
               "input, textarea, [contenteditable]"
@@ -121,13 +128,13 @@ const BlockEditor: React.FC<BlockEditorProps> = ({ pageId }) => {
             ? blocks.filter(b => b.parentBlockId === parentBlockId)
             : blocks.filter(b => !b.parentBlockId);
 
-          const blockIndex = allBlocks.findIndex(b => b.id === blockId);
+          const blockIndex = allBlocks.findIndex(b => b.$id === blockId);
           if (blockIndex > 0) {
             const prevBlock = allBlocks[blockIndex - 1];
             await deleteBlock(blockId);
             setTimeout(() => {
               const prevBlockElement = document.getElementById(
-                `block-${prevBlock.id}`
+                `block-${prevBlock.$id}`
               );
               const input = prevBlockElement?.querySelector(
                 "input, textarea, [contenteditable]"
@@ -168,7 +175,7 @@ const BlockEditor: React.FC<BlockEditorProps> = ({ pageId }) => {
 
   const handleSlashMenuSelect = (blockType: BlockType) => {
     if (focusedBlockId) {
-      const block = blocks.find(b => b.id === focusedBlockId);
+      const block = blocks.find(b => b.$id === focusedBlockId);
       if (block) {
         const updates: Partial<Block> = {
           type: blockType.type,
@@ -195,23 +202,47 @@ const BlockEditor: React.FC<BlockEditorProps> = ({ pageId }) => {
   }, [showSlashMenu]);
 
   useEffect(() => {
+    console.log(
+      "[BlockEditor] useEffect - blocks.length:",
+      blocks.length,
+      "pageId:",
+      pageId
+    );
     if (blocks.length === 0) {
-      addBlock(pageId);
+      console.log("[BlockEditor] No blocks found, creating initial block...");
+      addBlock(pageId).catch(err => {
+        console.error("[BlockEditor] Error creating initial block:", err);
+      });
     }
-  }, [blocks.length, pageId]);
+  }, [blocks.length, pageId, addBlock]);
+
+  console.log("[BlockEditor] Rendering - blocks.length:", blocks.length);
 
   return (
     <div ref={editorRef} className="relative">
       <div className="space-y-2">
-        {blocks.map(block => (
-          <EditableBlock
-            key={block.id}
-            block={block}
-            onContentChange={handleBlockContentChange}
-            onKeyDown={handleKeyDown}
-            onUpdateBlock={updates => updateBlock(block.id, updates)}
-          />
-        ))}
+        {blocks.length === 0 ? (
+          <div className="text-muted-foreground text-sm p-4">
+            No blocks found. Creating initial block...
+          </div>
+        ) : (
+          blocks.map(block => {
+            console.log(
+              "[BlockEditor] Rendering block:",
+              block.$id,
+              block.type
+            );
+            return (
+              <EditableBlock
+                key={block.$id}
+                block={block}
+                onContentChange={handleBlockContentChange}
+                onKeyDown={handleKeyDown}
+                onUpdateBlock={updates => updateBlock(block.$id, updates)}
+              />
+            );
+          })
+        )}
       </div>
 
       {showSlashMenu && (

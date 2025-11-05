@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { RoadmapTask } from "../types";
 import { listRows, TABLES, queryByUserId } from "../lib/appwrite";
 import { useAuth } from "./auth-context";
@@ -8,9 +14,11 @@ interface RoadmapContextValue {
   roadmapTasks: RoadmapTask[];
 }
 
-const RoadmapContext = createContext<RoadmapContextValue | undefined>(undefined);
+const RoadmapContext = createContext<RoadmapContextValue | undefined>(
+  undefined
+);
 
-export function RoadmapProvider({ children }: { children: React.ReactNode; }) {
+export function RoadmapProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [roadmapTasks, setRoadmapTasks] = useState<RoadmapTask[]>([]);
 
@@ -22,15 +30,15 @@ export function RoadmapProvider({ children }: { children: React.ReactNode; }) {
     let cancelled = false;
     const load = async () => {
       try {
-        const response = await listRows(
-          TABLES.roadmapTasks,
-          [queryByUserId(user.$id)]
-        );
+        const response = await listRows(TABLES.roadmapTasks, [
+          queryByUserId(user.$id),
+        ]);
         if (cancelled) return;
 
         setRoadmapTasks(response.rows.map(mapRoadmapTaskFromDocument));
       } catch (err) {
-        if (!cancelled) console.error("Unexpected error loading roadmap tasks:", err);
+        if (!cancelled)
+          console.error("Unexpected error loading roadmap tasks:", err);
       }
     };
     load();
@@ -40,7 +48,9 @@ export function RoadmapProvider({ children }: { children: React.ReactNode; }) {
   }, [user]);
 
   const value = useMemo(() => ({ roadmapTasks }), [roadmapTasks]);
-  return <RoadmapContext.Provider value={value}>{children}</RoadmapContext.Provider>;
+  return (
+    <RoadmapContext.Provider value={value}>{children}</RoadmapContext.Provider>
+  );
 }
 
 export function useRoadmap() {
@@ -48,5 +58,3 @@ export function useRoadmap() {
   if (!ctx) throw new Error("useRoadmap must be used within RoadmapProvider");
   return ctx;
 }
-
-

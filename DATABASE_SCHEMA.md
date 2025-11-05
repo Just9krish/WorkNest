@@ -64,6 +64,7 @@ Stores hierarchical pages/pages that users can organize in a tree structure.
 | `$id`        | string   | -    | ✅       | Auto       | Document ID                                         |
 | `userId`     | string   | 255  | ✅       | -          | Appwrite user ID (string reference, NOT a relation) |
 | `title`      | string   | 255  | ✅       | "Untitled" | Page title                                          |
+| `slug`       | string   | 255  | ✅       | -          | URL-friendly slug for routing (unique per user)     |
 | `icon`       | string   | 50   | ❌       | null       | Emoji or icon identifier                            |
 | `parentId`   | string   | 255  | ❌       | null       | ID of parent page (for hierarchy, string reference) |
 | `isExpanded` | boolean  | -    | ✅       | false      | Whether the page is expanded in UI                  |
@@ -73,6 +74,7 @@ Stores hierarchical pages/pages that users can organize in a tree structure.
 ### Indexes
 
 - **userId_index** - Key index on `userId` (for filtering by user)
+- **slug_index** - Key index on `slug` (for querying by slug, should be unique per user)
 - **parentId_index** - Key index on `parentId` (optional, for hierarchy queries)
 
 ### Permissions
