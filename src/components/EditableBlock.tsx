@@ -29,6 +29,7 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isTypingRef = useRef(false);
+  const shouldBeEditingRef = useRef(false);
 
   const childBlocks = block.type === "toggle" ? getChildBlocks(block.$id) : [];
 
@@ -39,6 +40,24 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
       setLocalContent(block.content);
     }
   }, [block.content]);
+
+  // Auto-focus and enter editing mode when block is newly created (empty content)
+  useEffect(() => {
+    if (block.content === "" && !isEditing) {
+      setIsEditing(true);
+      shouldBeEditingRef.current = true;
+      // Use requestAnimationFrame + setTimeout to ensure DOM is ready
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          if (inputRef.current) {
+            inputRef.current.focus();
+            // Mark as typing to prevent focus loss during initial render
+            isTypingRef.current = true;
+          }
+        }, 0);
+      });
+    }
+  }, [block.content, block.$id, isEditing]); // Re-run when block ID changes (new block)
 
   // Debounced update function using custom hook
   const debouncedUpdate = useDebounce(
@@ -62,7 +81,11 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
   };
 
   const handleBlur = () => {
-    setIsEditing(false);
+    // Only exit editing mode if content is not empty, or if it's a real blur (not programmatic)
+    if (localContent.trim() !== "" || !shouldBeEditingRef.current) {
+      setIsEditing(false);
+      shouldBeEditingRef.current = false;
+    }
     // Ensure final update is sent on blur
     onContentChange(block.$id, localContent);
     // Mark that we're no longer typing
@@ -81,6 +104,11 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
       setLocalContent(newContent);
       // Mark that user is actively typing
       isTypingRef.current = true;
+      // Keep editing mode when typing
+      if (!isEditing) {
+        setIsEditing(true);
+        shouldBeEditingRef.current = true;
+      }
       debouncedUpdate(newContent);
     }
   };
@@ -120,13 +148,22 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
     }, 50);
   };
 
+  // Maintain focus when in editing mode, especially after re-renders
   useEffect(() => {
     if (isEditing && inputRef.current) {
-      inputRef.current.focus();
-      const length = inputRef.current.value.length;
-      inputRef.current.setSelectionRange(length, length);
+      // Use requestAnimationFrame to ensure DOM is ready
+      requestAnimationFrame(() => {
+        if (inputRef.current && document.activeElement !== inputRef.current) {
+          // Only restore focus if we should be editing (new block or user was typing)
+          if (shouldBeEditingRef.current || isTypingRef.current) {
+            inputRef.current.focus();
+            const length = inputRef.current.value.length;
+            inputRef.current.setSelectionRange(length, length);
+          }
+        }
+      });
     }
-  }, [isEditing]);
+  }, [isEditing]); // Only depend on isEditing to avoid excessive re-focuses
 
   const getPlaceholder = () => {
     if (localContent === "") {
@@ -146,7 +183,7 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           placeholder={getPlaceholder()}
-          className="w-full bg-transparent border-none outline-none text-foreground placeholder-muted-foreground text-base leading-relaxed resize-none shadow-none focus-visible:ring-0"
+          className="!w-full !bg-transparent !border-0 !outline-none text-foreground placeholder-muted-foreground/70 text-base leading-relaxed !shadow-none !ring-0 !focus-visible:ring-0 !p-0 !m-0 !h-auto !min-h-0 !rounded-none"
         />
       );
     }
@@ -154,10 +191,12 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
     return (
       <div
         onClick={handleClick}
-        className="w-full text-foreground text-base leading-relaxed cursor-text min-h-6 py-1"
+        className="w-full text-foreground/90 text-base leading-relaxed cursor-text min-h-6"
       >
         {localContent || (
-          <span className="text-muted-foreground">Type '/' for commands</span>
+          <span className="text-muted-foreground/70">
+            Type '/' for commands
+          </span>
         )}
       </div>
     );
@@ -174,7 +213,7 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           placeholder={getPlaceholder()}
-          className="w-full bg-transparent border-none outline-none text-foreground placeholder-muted-foreground text-2xl font-bold leading-tight resize-none shadow-none focus-visible:ring-0"
+          className="!w-full !bg-transparent !border-0 !outline-none text-foreground placeholder-muted-foreground/70 text-2xl font-bold leading-tight !shadow-none !ring-0 !focus-visible:ring-0 !p-0 !m-0 !h-auto !min-h-0 !rounded-none"
         />
       );
     }
@@ -182,10 +221,10 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
     return (
       <div
         onClick={handleClick}
-        className="w-full text-foreground text-2xl font-bold leading-tight cursor-text min-h-8 py-1"
+        className="w-full text-foreground/90 text-2xl font-bold leading-tight cursor-text min-h-8"
       >
         {localContent || (
-          <span className="text-muted-foreground text-2xl font-bold">
+          <span className="text-muted-foreground/70 text-2xl font-bold">
             Type '/' for commands
           </span>
         )}
@@ -212,7 +251,7 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
               onBlur={handleBlur}
               onKeyDown={handleKeyDown}
               placeholder={getPlaceholder()}
-              className={`w-full bg-transparent border-none outline-none placeholder-muted-foreground text-base leading-relaxed resize-none shadow-none focus-visible:ring-0 ${
+              className={`!w-full !bg-transparent !border-0 !outline-none placeholder-muted-foreground/70 text-base leading-relaxed !shadow-none !ring-0 !focus-visible:ring-0 !p-0 !m-0 !h-auto !min-h-0 !rounded-none ${
                 block.checked
                   ? "text-muted-foreground line-through"
                   : "text-foreground"
@@ -221,14 +260,14 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
           ) : (
             <div
               onClick={handleClick}
-              className={`w-full text-base leading-relaxed cursor-text min-h-6 py-1 ${
+              className={`w-full text-base leading-relaxed cursor-text min-h-6 ${
                 block.checked
-                  ? "text-muted-foreground line-through"
-                  : "text-foreground"
+                  ? "text-muted-foreground/70 line-through"
+                  : "text-foreground/90"
               }`}
             >
               {localContent || (
-                <span className="text-muted-foreground no-underline">
+                <span className="text-muted-foreground/70 no-underline">
                   Type '/' for commands
                 </span>
               )}
@@ -305,15 +344,15 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
                 onBlur={handleBlur}
                 onKeyDown={handleKeyDown}
                 placeholder={getPlaceholder()}
-                className="w-full bg-transparent border-none outline-none text-foreground placeholder-muted-foreground text-base leading-relaxed resize-none shadow-none focus-visible:ring-0"
+                className="!w-full !bg-transparent !border-0 !outline-none text-foreground placeholder-muted-foreground/70 text-base leading-relaxed !shadow-none !ring-0 !focus-visible:ring-0 !p-0 !m-0 !h-auto !min-h-0 !rounded-none"
               />
             ) : (
               <div
                 onClick={handleClick}
-                className="w-full text-foreground text-base leading-relaxed cursor-text min-h-6 py-1"
+                className="w-full text-foreground/90 text-base leading-relaxed cursor-text min-h-6"
               >
                 {localContent || (
-                  <span className="text-muted-foreground">
+                  <span className="text-muted-foreground/70">
                     Type '/' for commands
                   </span>
                 )}
@@ -441,11 +480,18 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
     block.$id
   );
 
+  // Determine if block should show editing state
+  const isEditingState = isEditing || localContent === "";
+
   return (
     <div
       id={`block-${block.$id}`}
-      className={`group relative rounded-md transition-colors ${
-        block.type === "divider" ? "" : "hover:bg-muted/50"
+      className={`group relative ${
+        block.type === "divider"
+          ? ""
+          : isEditingState
+            ? "" // Editing: just a thin left border, nothing else
+            : "hover:bg-muted/10" // Non-editing: very subtle hover
       } ${block.parentBlockId ? "ml-4" : ""}`}
     >
       {renderedContent}

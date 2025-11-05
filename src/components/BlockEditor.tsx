@@ -109,15 +109,28 @@ const BlockEditor: React.FC<BlockEditorProps> = ({ pageId }) => {
         } else {
           e.preventDefault();
           const newBlock = await addBlock(pageId, blockId, parentBlockId);
-          setTimeout(() => {
-            const newBlockElement = document.getElementById(
-              `block-${newBlock.$id}`
-            );
-            const input = newBlockElement?.querySelector(
-              "input, textarea, [contenteditable]"
-            ) as HTMLElement;
-            input?.focus();
-          }, 50); // Small delay to ensure element is rendered
+          // Use requestAnimationFrame for better timing with React's render cycle
+          requestAnimationFrame(() => {
+            setTimeout(() => {
+              const newBlockElement = document.getElementById(
+                `block-${newBlock.$id}`
+              );
+              const input = newBlockElement?.querySelector(
+                "input, textarea, [contenteditable]"
+              ) as HTMLElement;
+              if (input) {
+                input.focus();
+                // Ensure cursor is at the end
+                if (
+                  input instanceof HTMLInputElement ||
+                  input instanceof HTMLTextAreaElement
+                ) {
+                  const length = input.value.length;
+                  input.setSelectionRange(length, length);
+                }
+              }
+            }, 10);
+          });
         }
         break;
 
