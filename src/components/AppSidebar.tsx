@@ -168,7 +168,7 @@ const AppSidebar: React.FC = () => {
           </div>
           {state !== "collapsed" && workspace && (
             <h1 className="text-lg font-bold text-sidebar-foreground">
-              {workspace.name}
+              {workspace.name || "Worknest"}
             </h1>
           )}
         </div>

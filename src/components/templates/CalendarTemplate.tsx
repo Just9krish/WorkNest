@@ -221,7 +221,7 @@ const CalendarTemplate: React.FC = () => {
 const EventModal: React.FC<{
   event: CalendarEvent | null;
   selectedDate: string;
-  tagColors: { name: string; color: string }[];
+  tagColors: { name: string; color: string; }[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }> = ({ event, selectedDate, tagColors, open, onOpenChange }) => {
@@ -244,6 +244,30 @@ const EventModal: React.FC<{
     color: event?.color || "bg-blue-500",
     description: event?.description || null,
   });
+
+  // Update form data when selectedDate changes (only when adding new event, not editing)
+  useEffect(() => {
+    if (!event && selectedDate) {
+      setFormData(prev => ({
+        ...prev,
+        date: selectedDate,
+      }));
+    }
+  }, [selectedDate, event]);
+
+  // Reset form data when modal opens/closes or event changes
+  useEffect(() => {
+    if (open) {
+      setFormData({
+        title: event?.title || "",
+        date: event?.date || selectedDate,
+        time: event?.time || "09:00",
+        tag: event?.tag || "Meeting",
+        color: event?.color || "bg-blue-500",
+        description: event?.description || null,
+      });
+    }
+  }, [open, event, selectedDate]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
