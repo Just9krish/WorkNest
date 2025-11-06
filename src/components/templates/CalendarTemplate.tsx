@@ -1,11 +1,6 @@
-import React, { useState } from "react";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  Calendar as CalendarIcon,
-  Trash2,
-} from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+import { Plus, Calendar as CalendarIcon, Trash2 } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import { CalendarEvent } from "../../types";
 import { Button } from "../ui/button";
@@ -26,42 +21,70 @@ import {
   DialogTitle,
   DialogFooter,
 } from "../ui/dialog";
+import {
+  CalendarProvider,
+  CalendarHeader,
+  CalendarBody,
+  CalendarDate,
+  CalendarDatePagination,
+  CalendarItem,
+  useCalendarMonth,
+  useCalendarYear,
+  monthsForLocale,
+} from "../kibo-ui/calendar";
+
+// Component to display month and year as text
+const MonthYearDisplay: React.FC = () => {
+  const [month] = useCalendarMonth();
+  const [year] = useCalendarYear();
+
+  // Get month name using the locale-aware function
+  const monthNames = monthsForLocale("en-US", "long");
+  const monthName = monthNames[month];
+
+  return (
+    <div className="flex items-center justify-center px-4">
+      <span className="text-lg font-bold text-foreground">
+        {monthName} {year}
+      </span>
+    </div>
+  );
+};
 
 const CalendarTemplate: React.FC = () => {
   const { calendarEvents } = useApp();
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState<"month" | "week">("month");
+  const [searchParams, setSearchParams] = useSearchParams();
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
 
-  const today = new Date();
-  const currentMonth = currentDate.getMonth();
-  const currentYear = currentDate.getFullYear();
+  // Get view mode from query params, validate and default to "month"
+  const viewParam = searchParams.get("view");
+  const isValidView = viewParam === "month" || viewParam === "week";
+  const viewMode: "month" | "week" = isValidView ? viewParam : "month";
 
-  const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
-
-  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-  const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
-
-  const navigateMonth = (direction: "prev" | "next") => {
-    setCurrentDate(
-      new Date(currentYear, currentMonth + (direction === "next" ? 1 : -1), 1)
-    );
+  // Update query params when view mode changes
+  const handleViewModeChange = (mode: "month" | "week") => {
+    setSearchParams(prev => {
+      const newParams = new URLSearchParams(prev);
+      newParams.set("view", mode);
+      return newParams;
+    });
   };
+
+  // Initialize view param if not present or invalid
+  useEffect(() => {
+    if (!isValidView) {
+      setSearchParams(
+        prev => {
+          const newParams = new URLSearchParams(prev);
+          newParams.set("view", "month");
+          return newParams;
+        },
+        { replace: true }
+      );
+    }
+  }, [isValidView, setSearchParams]);
 
   const formatDate = (date: Date) => {
     const year = date.getFullYear();
@@ -70,15 +93,8 @@ const CalendarTemplate: React.FC = () => {
     return `${year}-${month}-${day}`;
   };
 
-  const getEventsForDate = (date: string) => {
-    return calendarEvents.filter(event => event.date === date);
-  };
-
-  const handleDateClick = (day: number) => {
-    console.log("Date clicked:", day);
-    const clickedDate = new Date(currentYear, currentMonth, day);
-    const dateString = formatDate(clickedDate);
-    console.log("Formatted date:", dateString);
+  const handleDateClick = (_day: number, date: Date) => {
+    const dateString = formatDate(date);
     setSelectedDate(dateString);
     setShowAddModal(true);
   };
@@ -96,79 +112,6 @@ const CalendarTemplate: React.FC = () => {
     { name: "Personal", color: "bg-chart-4" },
   ];
 
-  const renderCalendarGrid = () => {
-    const days = [];
-    const totalCells = 42; // 6 weeks × 7 days
-
-    // Empty cells for days before the first day of the month
-    for (let i = 0; i < firstDayOfMonth; i++) {
-      days.push(
-        <div
-          key={`empty-${i}`}
-          className="h-24 p-1 border border-border bg-muted"
-        ></div>
-      );
-    }
-
-    // Days of the current month
-    for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(currentYear, currentMonth, day);
-      const dateString = formatDate(date);
-      const events = getEventsForDate(dateString);
-      const isToday = date.toDateString() === today.toDateString();
-
-      days.push(
-        <div
-          key={day}
-          className={`h-24 p-1 border border-border cursor-pointer hover:bg-muted transition-colors ${
-            isToday ? "bg-primary/10 border-primary/30" : "bg-card"
-          }`}
-          onClick={() => handleDateClick(day)}
-        >
-          <div
-            className={`text-sm font-medium mb-1 ${
-              isToday ? "text-primary" : "text-card-foreground"
-            }`}
-          >
-            {day}
-          </div>
-          <div className="space-y-1">
-            {events.slice(0, 2).map(event => (
-              <div
-                key={event.id}
-                className={`text-xs p-1 rounded text-white truncate ${event.color}`}
-                onClick={e => {
-                  e.stopPropagation();
-                  handleEditEvent(event);
-                }}
-              >
-                {event.title}
-              </div>
-            ))}
-            {events.length > 2 && (
-              <div className="text-xs text-muted-foreground">
-                +{events.length - 2} more
-              </div>
-            )}
-          </div>
-        </div>
-      );
-    }
-
-    // Fill remaining cells
-    const remainingCells = totalCells - firstDayOfMonth - daysInMonth;
-    for (let i = 0; i < remainingCells; i++) {
-      days.push(
-        <div
-          key={`empty-end-${i}`}
-          className="h-24 p-1 border border-border bg-muted"
-        ></div>
-      );
-    }
-
-    return days;
-  };
-
   return (
     <div className="flex-1">
       {/* Header */}
@@ -185,13 +128,13 @@ const CalendarTemplate: React.FC = () => {
           <div className="flex space-x-2">
             <Button
               variant={viewMode === "month" ? "default" : "outline"}
-              onClick={() => setViewMode("month")}
+              onClick={() => handleViewModeChange("month")}
             >
               Month
             </Button>
             <Button
               variant={viewMode === "week" ? "default" : "outline"}
-              onClick={() => setViewMode("week")}
+              onClick={() => handleViewModeChange("week")}
             >
               Week
             </Button>
@@ -199,69 +142,63 @@ const CalendarTemplate: React.FC = () => {
         </div>
       </div>
 
-      {/* Calendar Controls */}
-      <div className="px-8 py-4 border-b border-border flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+      {/* Calendar Controls and Grid */}
+      <CalendarProvider>
+        <div className="px-8 py-4 border-b border-border flex items-center justify-between">
+          <CalendarDate>
+            <CalendarDatePagination>
+              <MonthYearDisplay />
+            </CalendarDatePagination>
+          </CalendarDate>
           <Button
-            variant="outline"
-            size="icon"
-            onClick={() => navigateMonth("prev")}
+            onClick={() => {
+              setSelectedDate(formatDate(new Date()));
+              setShowAddModal(true);
+            }}
           >
-            <ChevronLeft size={20} />
-          </Button>
-          <h2 className="text-xl font-semibold text-foreground">
-            {monthNames[currentMonth]} {currentYear}
-          </h2>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => navigateMonth("next")}
-          >
-            <ChevronRight size={20} />
+            <Plus size={16} className="mr-2" />
+            Add Event
           </Button>
         </div>
-        <Button
-          onClick={() => {
-            setSelectedDate(formatDate(new Date()));
-            setShowAddModal(true);
-          }}
-        >
-          <Plus size={16} className="mr-2" />
-          Add Event
-        </Button>
-      </div>
 
-      {/* Calendar Grid */}
-      <div className="px-8 py-6">
-        {viewMode === "month" && (
-          <div className="grid grid-cols-7 gap-px bg-border rounded-lg overflow-hidden">
-            {/* Day headers */}
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(day => (
-              <div
-                key={day}
-                className="bg-muted p-3 text-center text-sm font-medium text-muted-foreground"
+        {/* Calendar Grid */}
+        <div className="px-8 py-6">
+          {viewMode === "month" && (
+            <div className="border border-border rounded-lg overflow-hidden">
+              <CalendarHeader className="bg-muted border-b" />
+              <CalendarBody
+                events={calendarEvents}
+                onDayClick={handleDateClick}
               >
-                {day}
-              </div>
-            ))}
-            {/* Calendar cells */}
-            {renderCalendarGrid()}
-          </div>
-        )}
+                {({ event }) =>
+                  event ? (
+                    <CalendarItem
+                      event={event}
+                      onClick={e => {
+                        e.stopPropagation();
+                        handleEditEvent(event);
+                      }}
+                    />
+                  ) : null
+                }
+              </CalendarBody>
+            </div>
+          )}
 
-        {viewMode === "week" && (
-          <div className="text-center text-muted-foreground py-12">
-            <CalendarIcon
-              size={48}
-              className="mx-auto mb-4 text-muted-foreground/50"
-            />
-            <p className="text-lg">Week view coming soon!</p>
-            <p className="text-sm">
-              For now, enjoy the month view with full functionality.
-            </p>
-          </div>
-        )}
-      </div>
+          {viewMode === "week" && (
+            <div className="text-center text-muted-foreground py-12">
+              <CalendarIcon
+                size={48}
+                className="mx-auto mb-4 text-muted-foreground/50"
+              />
+              <p className="text-lg">Week view coming soon!</p>
+              <p className="text-sm">
+                For now, enjoy the month view with full functionality.
+              </p>
+            </div>
+          )}
+        </div>
+      </CalendarProvider>
 
       {/* Add/Edit Event Modal */}
       <EventModal
@@ -297,22 +234,27 @@ const EventModal: React.FC<{
     const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<
+    Omit<CalendarEvent, "$id" | "userId" | "$createdAt" | "$updatedAt">
+  >({
     title: event?.title || "",
     date: event?.date || selectedDate,
     time: event?.time || "09:00",
     tag: event?.tag || "Meeting",
     color: event?.color || "bg-blue-500",
-    description: (event as CalendarEvent)?.description || "",
+    description: event?.description || null,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.title.trim()) {
       if (event) {
-        updateCalendarEvent(event.id, formData);
+        updateCalendarEvent(event.$id, formData);
       } else {
-        addCalendarEvent(formData);
+        // Type assertion needed due to AppContext type definition mismatch
+        addCalendarEvent(
+          formData as Omit<CalendarEvent, "id" | "userId" | "createdAt">
+        );
       }
       onOpenChange(false);
     }
@@ -320,7 +262,7 @@ const EventModal: React.FC<{
 
   const handleDelete = () => {
     if (event) {
-      deleteCalendarEvent(event.id);
+      deleteCalendarEvent(event.$id);
       onOpenChange(false);
     }
   };
@@ -359,7 +301,7 @@ const EventModal: React.FC<{
             </label>
             <Textarea
               name="description"
-              value={formData.description}
+              value={formData.description || ""}
               onChange={handleChange}
               placeholder="Add event description..."
               className="min-h-20"
@@ -384,7 +326,7 @@ const EventModal: React.FC<{
               <Input
                 type="time"
                 name="time"
-                value={formData.time}
+                value={formData.time || ""}
                 onChange={handleChange}
               />
             </div>

@@ -1,22 +1,13 @@
 import React, { useState, useRef } from "react";
 import { useApp } from "../context/AppContext";
 import BlockEditor from "./BlockEditor";
-import RoadmapTemplate from "./templates/RoadmapTemplate";
-import CalendarTemplate from "./templates/CalendarTemplate";
 import IconPicker from "./IconPicker";
 import { useOnClickOutside } from "../hooks/useOnClickOutside";
 import { SmilePlus } from "lucide-react";
 import { Button } from "./ui/button";
 
 const MainContent: React.FC = () => {
-  const {
-    pages,
-    templates,
-    selectedPageId,
-    selectedTemplateId,
-    isSidebarCollapsed,
-    updatePage,
-  } = useApp();
+  const { pages, selectedPageId, isSidebarCollapsed, updatePage } = useApp();
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
   const iconPickerRef = useRef<HTMLDivElement>(null);
   const iconButtonRef = useRef<HTMLButtonElement>(null);
@@ -24,18 +15,8 @@ const MainContent: React.FC = () => {
   useOnClickOutside(
     iconPickerRef,
     () => setIsIconPickerOpen(false),
-    iconButtonRef as React.RefObject<HTMLElement>
+    iconButtonRef
   );
-
-  if (selectedTemplateId) {
-    const selectedTemplate = templates.find(t => t.id === selectedTemplateId);
-
-    if (selectedTemplate?.type === "roadmap") {
-      return <RoadmapTemplate />;
-    } else if (selectedTemplate?.type === "calendar") {
-      return <CalendarTemplate />;
-    }
-  }
 
   const selectedPage = pages.find(page => page.$id === selectedPageId);
 

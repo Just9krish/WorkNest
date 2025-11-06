@@ -35,7 +35,7 @@ interface AppContextType {
   addPage: (parentId?: string) => Promise<void>;
   deletePage: (pageId: string) => Promise<void>;
   selectPage: (pageId: string | null) => void;
-  selectTemplate: (templateId: string) => void;
+  selectTemplate: (templateId: string | null) => void;
   togglePageExpansion: (pageId: string) => void;
   updatePage: (
     pageId: string,

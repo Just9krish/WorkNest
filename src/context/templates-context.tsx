@@ -21,7 +21,7 @@ const initialTemplates: Template[] = [
 interface TemplatesContextValue {
   templates: Template[];
   selectedTemplateId: string | null;
-  selectTemplate: (templateId: string) => void;
+  selectTemplate: (templateId: string | null) => void;
 }
 
 const TemplatesContext = createContext<TemplatesContextValue | undefined>(

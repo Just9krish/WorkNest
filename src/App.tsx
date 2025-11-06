@@ -15,6 +15,9 @@ import {
 import { ThemeProvider } from "./context/ThemeContext";
 import { ModeToggle } from "./components/ui/mode-toggle";
 import { PageNavigationSync } from "./components/PageNavigationSync";
+import { TemplateNavigationSync } from "./components/TemplateNavigationSync";
+import RoadmapTemplate from "./components/templates/RoadmapTemplate";
+import CalendarTemplate from "./components/templates/CalendarTemplate";
 
 const AppLayout: React.FC = () => {
   const { isLoading, user } = useApp();
@@ -44,6 +47,7 @@ const AppLayout: React.FC = () => {
   return (
     <SidebarProvider defaultOpen={true}>
       <PageNavigationSync />
+      <TemplateNavigationSync />
       <AppSidebar />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4">
@@ -66,6 +70,10 @@ const App: React.FC = () => {
             <Route path="/" element={<AppLayout />}>
               <Route index element={<MainContent />} />
               <Route path="page/:slug" element={<PageDetail />} />
+              <Route path="templates">
+                <Route path="roadmap" element={<RoadmapTemplate />} />
+                <Route path="calendar" element={<CalendarTemplate />} />
+              </Route>
             </Route>
           </Routes>
         </ThemeProvider>

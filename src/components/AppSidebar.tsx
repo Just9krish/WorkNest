@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Plus, FileText, LogOut } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import { Page } from "../types";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
@@ -26,15 +26,14 @@ const AppSidebar: React.FC = () => {
     pages,
     templates,
     selectedPageId,
-    selectedTemplateId,
     updatePage,
     addPage,
     selectPage,
-    selectTemplate,
     signOut,
   } = useApp();
 
   const navigate = useNavigate();
+  const location = useLocation();
   const [editingPageId, setEditingPageId] = useState<string | null>(null);
   const [editingPageTitle, setEditingPageTitle] = useState("");
   const { state } = useSidebar();
@@ -180,20 +179,28 @@ const AppSidebar: React.FC = () => {
           <SidebarGroupLabel>Templates</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {templates.map(template => (
-                <SidebarMenuItem key={template.id}>
-                  <SidebarMenuButton
-                    isActive={selectedTemplateId === template.id}
-                    onClick={() => selectTemplate(template.id)}
-                    tooltip={state === "collapsed" ? template.name : undefined}
-                  >
-                    <span className="text-sm">{template.icon}</span>
-                    {state !== "collapsed" && (
-                      <span className="truncate">{template.name}</span>
-                    )}
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {templates.map(template => {
+                const isActive =
+                  location.pathname === `/templates/${template.type}`;
+                return (
+                  <SidebarMenuItem key={template.id}>
+                    <SidebarMenuButton
+                      isActive={isActive}
+                      onClick={() => {
+                        navigate(`/templates/${template.type}`);
+                      }}
+                      tooltip={
+                        state === "collapsed" ? template.name : undefined
+                      }
+                    >
+                      <span className="text-sm">{template.icon}</span>
+                      {state !== "collapsed" && (
+                        <span className="truncate">{template.name}</span>
+                      )}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
