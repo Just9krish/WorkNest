@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { Plus, FileText, LogOut } from "lucide-react";
+import {
+  Plus,
+  FileText,
+  LogOut,
+  Pencil,
+  Link as LinkIcon,
+  Trash2,
+  MoreHorizontal,
+} from "lucide-react";
 import { useApp } from "../context/AppContext";
 import { Page } from "../types";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -19,6 +27,12 @@ import {
   SidebarMenuSubItem,
   useSidebar,
 } from "./ui/sidebar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 
 const AppSidebar: React.FC = () => {
   const {
@@ -26,6 +40,7 @@ const AppSidebar: React.FC = () => {
     pages,
     templates,
     selectedPageId,
+    deletePage,
     updatePage,
     addPage,
     selectPage,
@@ -37,13 +52,8 @@ const AppSidebar: React.FC = () => {
   const [editingPageId, setEditingPageId] = useState<string | null>(null);
   const [editingPageTitle, setEditingPageTitle] = useState("");
   const { state } = useSidebar();
-
-  const handlePageTitleEdit = (page: Page) => {
-    if (state !== "collapsed") {
-      setEditingPageId(page.$id);
-      setEditingPageTitle(page.title);
-    }
-  };
+  const [contextPageId, setContextPageId] = useState<string | null>(null);
+  const [hoveredPageId, setHoveredPageId] = useState<string | null>(null);
 
   const handlePageTitleSubmit = () => {
     if (editingPageId && editingPageTitle.trim()) {
@@ -87,49 +97,116 @@ const AppSidebar: React.FC = () => {
     }
 
     return (
-      <SidebarMenuItem key={page.$id}>
-        <SidebarMenuButton
-          isActive={isSelected}
-          onClick={() => {
-            if (!isEditing) {
-              selectPage(page.$id);
-              navigate(`/page/${page.slug}`);
-            }
-          }}
-          tooltip={state === "collapsed" ? page.title : undefined}
+      <SidebarMenuItem
+        key={page.$id}
+        onMouseEnter={() => setHoveredPageId(page.$id)}
+        onMouseLeave={() => setHoveredPageId(null)}
+      >
+        <DropdownMenu
+          open={contextPageId === page.$id}
+          onOpenChange={open => setContextPageId(open ? page.$id : null)}
+          modal={false}
         >
-          {page.icon ? (
-            <span className="text-sm">{page.icon}</span>
-          ) : (
-            <FileText size={14} />
-          )}
-          {state !== "collapsed" && (
-            <>
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={editingPageTitle}
-                  onChange={e => setEditingPageTitle(e.target.value)}
-                  onBlur={handlePageTitleSubmit}
-                  onKeyDown={handlePageTitleKeyPress}
-                  className="flex-1 px-1 py-0.5 text-sm bg-background border border-border rounded focus:outline-none focus:ring-2 focus:ring-ring text-foreground"
-                  autoFocus
-                  onClick={e => e.stopPropagation()}
-                />
+          {/* Single invisible trigger for positioning only - menu is controlled via open prop */}
+          <DropdownMenuTrigger asChild>
+            <div
+              className="absolute inset-0 pointer-events-none"
+              aria-hidden="true"
+            />
+          </DropdownMenuTrigger>
+
+          <div className="relative flex items-center w-full">
+            <SidebarMenuButton
+              isActive={isSelected}
+              onClick={() => {
+                // Left click only selects and navigates, no inline rename
+                if (!isEditing) {
+                  selectPage(page.$id);
+                  navigate(`/page/${page.slug}`);
+                }
+              }}
+              onContextMenu={e => {
+                e.preventDefault();
+                setContextPageId(page.$id);
+              }}
+              tooltip={state === "collapsed" ? page.title : undefined}
+              className="flex-1"
+            >
+              {page.icon ? (
+                <span className="text-sm">{page.icon}</span>
               ) : (
-                <span
-                  className="truncate flex-1"
-                  onClick={e => {
-                    e.stopPropagation();
-                    handlePageTitleEdit(page);
-                  }}
-                >
-                  {page.title}
-                </span>
+                <FileText size={14} />
               )}
-            </>
-          )}
-        </SidebarMenuButton>
+              {state !== "collapsed" && (
+                <>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editingPageTitle}
+                      onChange={e => setEditingPageTitle(e.target.value)}
+                      onBlur={handlePageTitleSubmit}
+                      onKeyDown={handlePageTitleKeyPress}
+                      className="flex-1 px-1 py-0.5 text-sm bg-background border border-border rounded focus:outline-none focus:ring-2 focus:ring-ring text-foreground"
+                      autoFocus
+                      onClick={e => e.stopPropagation()}
+                    />
+                  ) : (
+                    <span className="truncate flex-1">{page.title}</span>
+                  )}
+                </>
+              )}
+            </SidebarMenuButton>
+            {state !== "collapsed" && !isEditing && (
+              <button
+                onClick={e => {
+                  e.stopPropagation();
+                  setContextPageId(page.$id);
+                }}
+                className={`absolute right-1 transition-opacity p-1 hover:bg-muted rounded flex items-center justify-center shrink-0 ${
+                  hoveredPageId === page.$id ? "opacity-100" : "opacity-0"
+                }`}
+                aria-label="Page options"
+              >
+                <MoreHorizontal size={16} className="text-muted-foreground" />
+              </button>
+            )}
+          </div>
+
+          <DropdownMenuContent align="start" className="w-48">
+            <DropdownMenuItem
+              onClick={() => {
+                setEditingPageId(page.$id);
+                setEditingPageTitle(page.title);
+                setContextPageId(null);
+              }}
+            >
+              <Pencil size={16} />
+              Rename
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                const origin =
+                  typeof window !== "undefined" ? window.location.origin : "";
+                const link = `${origin}/page/${page.slug}`;
+                navigator.clipboard?.writeText(link);
+                setContextPageId(null);
+              }}
+            >
+              <LinkIcon size={16} />
+              Copy link
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              variant="destructive"
+              onClick={async () => {
+                setContextPageId(null);
+                await deletePage(page.$id);
+              }}
+            >
+              <Trash2 size={16} />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {state !== "collapsed" && hasChildPages && isExpanded && (
           <SidebarMenuSub>

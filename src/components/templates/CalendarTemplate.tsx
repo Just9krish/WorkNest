@@ -221,7 +221,7 @@ const CalendarTemplate: React.FC = () => {
 const EventModal: React.FC<{
   event: CalendarEvent | null;
   selectedDate: string;
-  tagColors: { name: string; color: string; }[];
+  tagColors: { name: string; color: string }[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }> = ({ event, selectedDate, tagColors, open, onOpenChange }) => {
