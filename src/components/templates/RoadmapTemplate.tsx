@@ -40,9 +40,9 @@ const RoadmapTemplate: React.FC = () => {
   const overallProgress =
     roadmapTasks.length > 0
       ? Math.round(
-          roadmapTasks.reduce((sum, task) => sum + task.progress, 0) /
-            roadmapTasks.length
-        )
+        roadmapTasks.reduce((sum, task) => sum + task.progress, 0) /
+        roadmapTasks.length
+      )
       : 0;
 
   const handleProgressChange = (taskId: string, progress: number) => {
@@ -145,7 +145,7 @@ const RoadmapTemplate: React.FC = () => {
         {/* Task Cards */}
         <div className="space-y-4">
           {roadmapTasks.map(task => (
-            <Card key={task.id} className="p-6">
+            <Card key={task.$id} className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
                   <div className="flex items-center mb-2">
@@ -173,7 +173,7 @@ const RoadmapTemplate: React.FC = () => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => deleteRoadmapTask(task.id)}
+                  onClick={() => deleteRoadmapTask(task.$id)}
                   className="text-muted-foreground hover:text-destructive"
                 >
                   <Trash2 size={16} />
@@ -197,7 +197,7 @@ const RoadmapTemplate: React.FC = () => {
                     max="100"
                     value={task.progress}
                     onChange={e =>
-                      handleProgressChange(task.id, parseInt(e.target.value))
+                      handleProgressChange(task.$id, parseInt(e.target.value))
                     }
                     className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer slider"
                     style={{
@@ -212,7 +212,7 @@ const RoadmapTemplate: React.FC = () => {
                 <Select
                   value={task.status}
                   onValueChange={value =>
-                    handleStatusChange(task.id, value as RoadmapTask["status"])
+                    handleStatusChange(task.$id, value as RoadmapTask["status"])
                   }
                 >
                   <SelectTrigger

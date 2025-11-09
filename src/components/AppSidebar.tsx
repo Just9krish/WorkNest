@@ -162,9 +162,8 @@ const AppSidebar: React.FC = () => {
                   e.stopPropagation();
                   setContextPageId(page.$id);
                 }}
-                className={`absolute right-1 transition-opacity p-1 hover:bg-muted rounded flex items-center justify-center shrink-0 ${
-                  hoveredPageId === page.$id ? "opacity-100" : "opacity-0"
-                }`}
+                className={`absolute right-1 transition-opacity p-1 hover:bg-muted rounded flex items-center justify-center shrink-0 ${hoveredPageId === page.$id ? "opacity-100" : "opacity-0"
+                  }`}
                 aria-label="Page options"
               >
                 <MoreHorizontal size={16} className="text-muted-foreground" />
@@ -264,6 +263,7 @@ const AppSidebar: React.FC = () => {
                     <SidebarMenuButton
                       isActive={isActive}
                       onClick={() => {
+                        console.log("clicked", template.type);
                         navigate(`/templates/${template.type}`);
                       }}
                       tooltip={

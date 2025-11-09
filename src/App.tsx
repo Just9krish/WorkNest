@@ -70,10 +70,8 @@ const App: React.FC = () => {
             <Route path="/" element={<AppLayout />}>
               <Route index element={<MainContent />} />
               <Route path="page/:slug" element={<PageDetail />} />
-              <Route path="templates">
-                <Route path="roadmap" element={<RoadmapTemplate />} />
-                <Route path="calendar" element={<CalendarTemplate />} />
-              </Route>
+              <Route path="templates/roadmap" element={<RoadmapTemplate />} />
+              <Route path="templates/calendar" element={<CalendarTemplate />} />
             </Route>
           </Routes>
         </ThemeProvider>
