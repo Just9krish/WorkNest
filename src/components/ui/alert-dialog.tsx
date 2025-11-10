@@ -121,7 +121,8 @@ function AlertDialogAction({
   className,
   variant,
   ...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Action> & VariantProps<typeof buttonVariants>) {
+}: React.ComponentProps<typeof AlertDialogPrimitive.Action> &
+  VariantProps<typeof buttonVariants>) {
   return (
     <AlertDialogPrimitive.Action
       className={cn(buttonVariants({ variant, className }))}

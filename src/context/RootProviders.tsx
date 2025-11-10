@@ -8,7 +8,7 @@ import { CalendarProvider } from "./calendar-context";
 import { TemplatesProvider } from "./templates-context";
 import { AlertDialogProvider } from "./alert-dialog-context";
 
-export function RootProviders({ children }: { children: React.ReactNode; }) {
+export function RootProviders({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
       <UiProvider>

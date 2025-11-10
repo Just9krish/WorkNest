@@ -40,9 +40,9 @@ const RoadmapTemplate: React.FC = () => {
   const overallProgress =
     roadmapTasks.length > 0
       ? Math.round(
-        roadmapTasks.reduce((sum, task) => sum + task.progress, 0) /
-        roadmapTasks.length
-      )
+          roadmapTasks.reduce((sum, task) => sum + task.progress, 0) /
+            roadmapTasks.length
+        )
       : 0;
 
   const handleProgressChange = (taskId: string, progress: number) => {

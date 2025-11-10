@@ -39,76 +39,75 @@ export function CalendarProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
 
-  useEffect(() => {
+  const loadEvents = useCallback(async () => {
     if (!user) {
       setCalendarEvents([]);
       return;
     }
+    try {
+      const response = await listRows(TABLES.calendarEvents, [
+        queryByUserId(user.$id),
+      ]);
+      setCalendarEvents(response.rows.map(mapCalendarEventFromDocument));
+    } catch (err) {
+      console.error("Unexpected error loading calendar events:", err);
+    }
+  }, [user]);
+
+  useEffect(() => {
     let cancelled = false;
     const load = async () => {
-      try {
-        const response = await listRows(TABLES.calendarEvents, [
-          queryByUserId(user.$id),
-        ]);
-        if (cancelled) return;
-
-        setCalendarEvents(response.rows.map(mapCalendarEventFromDocument));
-      } catch (err) {
-        if (!cancelled)
-          console.error("Unexpected error loading calendar events:", err);
-      }
+      await loadEvents();
+      if (cancelled) return;
     };
     load();
 
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [loadEvents]);
 
   const addCalendarEvent = useCallback(
     async (
       event: Omit<CalendarEvent, "$id" | "userId" | "$createdAt" | "$updatedAt">
     ) => {
       if (!user) throw new Error("User not authenticated");
-      try {
-        await createRow(
-          TABLES.calendarEvents,
-          {
-            userId: user.$id,
-            title: event.title,
-            date: event.date,
-            time: event.time,
-            tag: event.tag,
-            color: event.color,
-            description: event.description,
-          },
-          ID.unique()
-        );
-      } catch (error) {
-        throw error;
-      }
+      await createRow(
+        TABLES.calendarEvents,
+        {
+          userId: user.$id,
+          title: event.title,
+          date: event.date,
+          time: event.time,
+          tag: event.tag,
+          color: event.color,
+          description: event.description,
+        },
+        ID.unique()
+      );
+      // Reload events after adding
+      await loadEvents();
     },
-    [user]
+    [user, loadEvents]
   );
 
   const updateCalendarEvent = useCallback(
     async (eventId: string, updates: Partial<CalendarEvent>) => {
-      try {
-        await updateRow(TABLES.calendarEvents, eventId, updates);
-      } catch (error) {
-        throw error;
-      }
+      await updateRow(TABLES.calendarEvents, eventId, updates);
+      // Reload events after updating
+      await loadEvents();
     },
-    []
+    [loadEvents]
   );
 
-  const deleteCalendarEvent = useCallback(async (eventId: string) => {
-    try {
+  const deleteCalendarEvent = useCallback(
+    async (eventId: string) => {
       await deleteRow(TABLES.calendarEvents, eventId);
-    } catch (error) {
-      throw error;
-    }
-  }, []);
+      // Reload events after deleting
+      await loadEvents();
+    },
+    [loadEvents]
+  );
 
   const value = useMemo(
     () => ({
