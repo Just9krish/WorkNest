@@ -18,6 +18,7 @@ import { PageNavigationSync } from "./components/PageNavigationSync";
 import { TemplateNavigationSync } from "./components/TemplateNavigationSync";
 import RoadmapTemplate from "./components/templates/RoadmapTemplate";
 import CalendarTemplate from "./components/templates/CalendarTemplate";
+import { GlobalAlertDialog } from "./components/GlobalAlertDialog";
 
 const AppLayout: React.FC = () => {
   const { isLoading, user } = useApp();
@@ -56,6 +57,7 @@ const AppLayout: React.FC = () => {
         </header>
         <Outlet />
       </SidebarInset>
+      <GlobalAlertDialog />
     </SidebarProvider>
   );
 };

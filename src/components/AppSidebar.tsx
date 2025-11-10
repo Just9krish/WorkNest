@@ -33,6 +33,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
+import { useAlertDialog } from "../context/alert-dialog-context";
 
 const AppSidebar: React.FC = () => {
   const {
@@ -46,6 +47,8 @@ const AppSidebar: React.FC = () => {
     selectPage,
     signOut,
   } = useApp();
+
+  const { showAlert } = useAlertDialog();
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -73,8 +76,29 @@ const AppSidebar: React.FC = () => {
   };
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate("/login");
+    showAlert({
+      title: "Sign out",
+      description: "Are you sure you want to sign out?",
+      onConfirm: async () => {
+        await signOut();
+        navigate("/login");
+      },
+      variant: "destructive",
+      confirmText: "Sign out",
+    });
+  };
+
+  const handleDeletePage = async (pageId: string) => {
+    showAlert({
+      title: "Delete page",
+      description: "Are you sure you want to delete this page?",
+      onConfirm: async () => {
+        setContextPageId(null);
+        await deletePage(pageId);
+      },
+      variant: "destructive",
+      confirmText: "Delete",
+    });
   };
 
   const getChildPages = (parentId: string | null): Page[] => {
@@ -196,9 +220,8 @@ const AppSidebar: React.FC = () => {
             </DropdownMenuItem>
             <DropdownMenuItem
               variant="destructive"
-              onClick={async () => {
-                setContextPageId(null);
-                await deletePage(page.$id);
+              onClick={() => {
+                handleDeletePage(page.$id);
               }}
             >
               <Trash2 size={16} />
