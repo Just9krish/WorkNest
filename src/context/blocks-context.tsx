@@ -53,11 +53,7 @@ export function BlocksProvider({ children }: { children: React.ReactNode }) {
         if (cancelled) return;
 
         const mappedBlocks = response.rows.map(mapBlockFromDocument);
-        console.log(
-          "[BlocksContext] Loaded blocks:",
-          mappedBlocks.length,
-          mappedBlocks
-        );
+
         setBlocks(mappedBlocks);
       } catch (err) {
         if (!cancelled) console.error("Unexpected error loading blocks:", err);
@@ -78,14 +74,7 @@ export function BlocksProvider({ children }: { children: React.ReactNode }) {
           (a, b) =>
             new Date(a.$createdAt).getTime() - new Date(b.$createdAt).getTime()
         );
-      console.log(
-        "[BlocksContext] getPageBlocks - pageId:",
-        pageId,
-        "all blocks:",
-        blocks.length,
-        "filtered:",
-        filtered.length
-      );
+
       return filtered;
     },
     [blocks]
@@ -109,12 +98,7 @@ export function BlocksProvider({ children }: { children: React.ReactNode }) {
       parentBlockId?: string
     ): Promise<Block> => {
       if (!user) throw new Error("User not authenticated");
-      console.log(
-        "[BlocksContext] Creating block - pageId:",
-        pageId,
-        "parentBlockId:",
-        parentBlockId
-      );
+
       const newBlock = await createRow(
         TABLES.blocks,
         {
@@ -127,9 +111,7 @@ export function BlocksProvider({ children }: { children: React.ReactNode }) {
         },
         ID.unique()
       );
-      console.log("[BlocksContext] Created block:", newBlock);
       const mapped = mapBlockFromDocument(newBlock);
-      console.log("[BlocksContext] Mapped block:", mapped);
       // Update local state immediately
       setBlocks(prev => [...prev, mapped]);
       return mapped;
@@ -142,10 +124,6 @@ export function BlocksProvider({ children }: { children: React.ReactNode }) {
       // Check if block exists in local state before attempting update
       const blockExists = blocks.some(b => b.$id === blockId);
       if (!blockExists) {
-        console.log(
-          "[BlocksContext] Block not found in local state, skipping update:",
-          blockId
-        );
         return;
       }
 
@@ -168,10 +146,6 @@ export function BlocksProvider({ children }: { children: React.ReactNode }) {
           errorMessage.includes("not be found") ||
           errorMessage.includes("could not be found")
         ) {
-          console.log(
-            "[BlocksContext] Block already deleted, removing from local state:",
-            blockId
-          );
           setBlocks(prev => prev.filter(block => block.$id !== blockId));
         }
       }
@@ -182,17 +156,9 @@ export function BlocksProvider({ children }: { children: React.ReactNode }) {
   const deleteBlock = useCallback(async (blockId: string) => {
     // Optimistically remove from local state first for immediate UI update
     setBlocks(prev => prev.filter(block => block.$id !== blockId));
-    console.log(
-      "[BlocksContext] Block removed from local state (optimistic update):",
-      blockId
-    );
 
     try {
       await deleteRow(TABLES.blocks, blockId);
-      console.log(
-        "[BlocksContext] Block deleted successfully in Appwrite:",
-        blockId
-      );
     } catch (error) {
       console.error("Error deleting block from Appwrite:", error);
       // If deletion fails, we could restore the block, but usually it's better to keep it removed

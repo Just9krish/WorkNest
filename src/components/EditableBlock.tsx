@@ -459,26 +459,7 @@ const EditableBlock: React.FC<EditableBlockProps> = ({
     }
   };
 
-  // Debug logging
-  useEffect(() => {
-    console.log(
-      "[EditableBlock] Mounting block:",
-      block.$id,
-      block.type,
-      block.content,
-      "block:",
-      block
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [block.$id]);
-
   const renderedContent = renderBlock();
-  console.log(
-    "[EditableBlock] renderBlock() returned:",
-    renderedContent ? "JSX" : "null",
-    "for block:",
-    block.$id
-  );
 
   // Determine if block should show editing state
   const isEditingState = isEditing || localContent === "";

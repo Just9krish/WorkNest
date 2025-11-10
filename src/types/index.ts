@@ -1,3 +1,5 @@
+import React from "react";
+
 // Appwrite document base type
 export interface AppwriteDocument {
   $id: string;
@@ -38,7 +40,7 @@ export type Block = AppwriteDocument & {
 export interface BlockType {
   type: "text" | "heading" | "todo" | "image" | "toggle" | "divider" | "code";
   label: string;
-  icon: string;
+  icon: React.ReactNode;
   description: string;
 }
 

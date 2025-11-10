@@ -279,7 +279,6 @@ const AppSidebar: React.FC = () => {
                     <SidebarMenuButton
                       isActive={isActive}
                       onClick={() => {
-                        console.log("clicked", template.type);
                         navigate(`/templates/${template.type}`);
                       }}
                       tooltip={
