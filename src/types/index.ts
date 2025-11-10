@@ -8,7 +8,6 @@ export interface AppwriteDocument {
 export type Page = AppwriteDocument & {
   title: string;
   slug: string;
-  icon: string | null;
   parentId: string | null;
   isExpanded: boolean;
   userId: string;
@@ -46,7 +45,7 @@ export interface BlockType {
 export interface Template {
   id: string;
   name: string;
-  icon: string;
+  icon: React.ReactNode;
   description: string;
   type: "roadmap" | "calendar";
 }

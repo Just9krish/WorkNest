@@ -1,18 +1,19 @@
 import React, { createContext, useContext, useMemo, useState } from "react";
 import { Template } from "../types";
+import { Calendar, Target } from "lucide-react";
 
 const initialTemplates: Template[] = [
   {
     id: "template-roadmap",
     name: "Roadmap",
-    icon: "🗺️",
+    icon: <Target />,
     description: "Plan and track project milestones",
     type: "roadmap",
   },
   {
     id: "template-calendar",
     name: "Calendar",
-    icon: "📅",
+    icon: <Calendar />,
     description: "Organize events and deadlines",
     type: "calendar",
   },
@@ -34,7 +35,7 @@ export function TemplatesProvider({ children }: { children: React.ReactNode }) {
     null
   );
 
-  const selectTemplate = (templateId: string) => {
+  const selectTemplate = (templateId: string | null) => {
     setSelectedTemplateId(templateId);
   };
 

@@ -92,7 +92,6 @@ export function PagesProvider({ children }: { children: React.ReactNode }) {
             slug: uniqueSlug,
             userId: user.$id,
             parentId: parentId,
-            icon: "📄",
             isExpanded: false,
           },
           ID.unique()

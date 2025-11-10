@@ -156,11 +156,7 @@ const AppSidebar: React.FC = () => {
               tooltip={state === "collapsed" ? page.title : undefined}
               className="flex-1"
             >
-              {page.icon ? (
-                <span className="text-sm">{page.icon}</span>
-              ) : (
-                <FileText size={14} />
-              )}
+              <FileText size={14} />
               {state !== "collapsed" && (
                 <>
                   {isEditing ? (
@@ -186,7 +182,7 @@ const AppSidebar: React.FC = () => {
                   e.stopPropagation();
                   setContextPageId(page.$id);
                 }}
-                className={`absolute right-1 transition-opacity p-1 hover:bg-muted rounded flex items-center justify-center shrink-0 ${
+                className={`absolute right-1 transition-opacity p-1 rounded flex items-center justify-center shrink-0 ${
                   hoveredPageId === page.$id ? "opacity-100" : "opacity-0"
                 }`}
                 aria-label="Page options"
@@ -242,11 +238,7 @@ const AppSidebar: React.FC = () => {
                     navigate(`/page/${child.slug}`);
                   }}
                 >
-                  {child.icon ? (
-                    <span className="text-sm">{child.icon}</span>
-                  ) : (
-                    <FileText size={14} />
-                  )}
+                  <FileText size={14} />
                   <span className="truncate">{child.title}</span>
                 </SidebarMenuSubButton>
               </SidebarMenuSubItem>
@@ -283,7 +275,7 @@ const AppSidebar: React.FC = () => {
                 const isActive =
                   location.pathname === `/templates/${template.type}`;
                 return (
-                  <SidebarMenuItem key={template.id}>
+                  <SidebarMenuItem key={template.name}>
                     <SidebarMenuButton
                       isActive={isActive}
                       onClick={() => {
