@@ -77,33 +77,63 @@ const BlockEditor: React.FC<BlockEditorProps> = ({ pageId }) => {
   ];
 
   const handleBlockContentChange = (blockId: string, content: string) => {
+    console.log("[BlockEditor] handleBlockContentChange:", {
+      blockId,
+      content,
+      endsWithSlash: content.endsWith("/"),
+      currentShowSlashMenu: showSlashMenu,
+    });
     updateBlock(blockId, { content });
 
     if (content.endsWith("/")) {
-      // Find the actual input/textarea element within the block
-      const blockElement = document.getElementById(`block-${blockId}`);
-      if (blockElement) {
-        const inputElement = blockElement.querySelector("input, textarea") as
-          | HTMLInputElement
-          | HTMLTextAreaElement
-          | null;
+      // Only open menu if it's not already open for this block
+      // This prevents reopening when clicking on the input after closing
+      if (!showSlashMenu || focusedBlockId !== blockId) {
+        // Find the actual input/textarea element within the block
+        const blockElement = document.getElementById(`block-${blockId}`);
+        if (blockElement) {
+          const inputElement = blockElement.querySelector("input, textarea") as
+            | HTMLInputElement
+            | HTMLTextAreaElement
+            | null;
 
-        if (inputElement) {
-          setSlashMenuAnchor(inputElement);
-          setShowSlashMenu(true);
-          setFocusedBlockId(blockId);
-          setSelectedSlashIndex(0);
+          if (inputElement) {
+            console.log(
+              "[BlockEditor] Opening slash menu, inputElement:",
+              inputElement
+            );
+            setSlashMenuAnchor(inputElement);
+            setShowSlashMenu(true);
+            setFocusedBlockId(blockId);
+            setSelectedSlashIndex(0);
+          }
         }
+      } else {
+        console.log("[BlockEditor] Menu already open for this block, skipping");
       }
     } else {
+      console.log(
+        "[BlockEditor] Closing slash menu (content doesn't end with /)"
+      );
       setShowSlashMenu(false);
       setSlashMenuAnchor(null);
     }
   };
 
+  // Debug: Log showSlashMenu state changes
+  useEffect(() => {
+    console.log("[BlockEditor] showSlashMenu state changed:", showSlashMenu);
+  }, [showSlashMenu]);
+
+  // Debug: Log slashMenuAnchor changes
+  useEffect(() => {
+    console.log("[BlockEditor] slashMenuAnchor changed:", slashMenuAnchor);
+  }, [slashMenuAnchor]);
+
   // Update anchor position when menu anchor changes
   useEffect(() => {
     if (anchorRef.current && slashMenuAnchor) {
+      console.log("[BlockEditor] Updating anchor position");
       const inputRect = slashMenuAnchor.getBoundingClientRect();
       const selectionStart =
         slashMenuAnchor.selectionStart || slashMenuAnchor.value.length;
@@ -240,6 +270,7 @@ const BlockEditor: React.FC<BlockEditorProps> = ({ pageId }) => {
 
       case "Escape":
         if (showSlashMenu) {
+          console.log("[BlockEditor] Escape key pressed, closing menu");
           e.preventDefault();
           setShowSlashMenu(false);
           updateBlock(blockId, { content: block.content.slice(0, -1) });
@@ -249,6 +280,7 @@ const BlockEditor: React.FC<BlockEditorProps> = ({ pageId }) => {
   };
 
   const handleSlashMenuSelect = (blockType: BlockType) => {
+    console.log("[BlockEditor] handleSlashMenuSelect:", blockType.type);
     if (focusedBlockId) {
       const block = blocks.find(b => b.$id === focusedBlockId);
       if (block) {
@@ -263,6 +295,7 @@ const BlockEditor: React.FC<BlockEditorProps> = ({ pageId }) => {
         updateBlock(focusedBlockId, updates);
       }
     }
+    console.log("[BlockEditor] Closing slash menu after selection");
     setShowSlashMenu(false);
   };
 
@@ -289,7 +322,29 @@ const BlockEditor: React.FC<BlockEditorProps> = ({ pageId }) => {
       </div>
 
       {slashMenuAnchor && (
-        <Popover open={showSlashMenu} onOpenChange={setShowSlashMenu}>
+        <Popover
+          open={showSlashMenu}
+          onOpenChange={open => {
+            console.log("[BlockEditor] Popover onOpenChange called:", {
+              open,
+              currentShowSlashMenu: showSlashMenu,
+              slashMenuAnchor: slashMenuAnchor,
+              timestamp: new Date().toISOString(),
+            });
+            setShowSlashMenu(open);
+            // When closing, also clear the "/" from the input to prevent reopening
+            if (!open && slashMenuAnchor && focusedBlockId) {
+              console.log("[BlockEditor] Clearing '/' from input on close");
+              const block = blocks.find(b => b.$id === focusedBlockId);
+              if (block && block.content.endsWith("/")) {
+                updateBlock(focusedBlockId, {
+                  content: block.content.slice(0, -1),
+                });
+              }
+              setSlashMenuAnchor(null);
+            }
+          }}
+        >
           <PopoverAnchor asChild>
             <div ref={anchorRef} />
           </PopoverAnchor>
@@ -298,7 +353,28 @@ const BlockEditor: React.FC<BlockEditorProps> = ({ pageId }) => {
             align="start"
             side="bottom"
             sideOffset={4}
-            onOpenAutoFocus={e => e.preventDefault()}
+            onOpenAutoFocus={e => {
+              console.log("[BlockEditor] PopoverContent onOpenAutoFocus");
+              e.preventDefault();
+            }}
+            onInteractOutside={e => {
+              console.log("[BlockEditor] PopoverContent onInteractOutside:", {
+                target: e.target,
+                currentTarget: e.currentTarget,
+              });
+            }}
+            onEscapeKeyDown={() => {
+              console.log("[BlockEditor] PopoverContent onEscapeKeyDown");
+            }}
+            onPointerDownOutside={e => {
+              console.log(
+                "[BlockEditor] PopoverContent onPointerDownOutside:",
+                {
+                  target: e.target,
+                  currentTarget: e.currentTarget,
+                }
+              );
+            }}
           >
             <SlashCommandMenu
               blockTypes={blockTypes}
