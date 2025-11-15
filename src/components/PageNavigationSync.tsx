@@ -10,15 +10,26 @@ export const PageNavigationSync: React.FC = () => {
   const location = useLocation();
   const { pages, selectedPageId, selectPage } = usePages();
 
-  // Sync URL with selected page
+  // Sync URL with selected page (only when on a page route, not template routes)
   useEffect(() => {
     if (selectedPageId) {
       const selectedPage = pages.find(p => p.$id === selectedPageId);
-      if (selectedPage && location.pathname !== `/page/${selectedPage.slug}`) {
+      // Only sync if we're on a page route, not on template routes
+      const isOnPageRoute = location.pathname.startsWith("/page/");
+      const isOnTemplateRoute = location.pathname.startsWith("/templates/");
+
+      if (
+        selectedPage &&
+        isOnPageRoute &&
+        location.pathname !== `/page/${selectedPage.slug}`
+      ) {
         navigate(`/page/${selectedPage.slug}`, { replace: true });
+      } else if (isOnTemplateRoute && selectedPageId) {
+        // Clear page selection when navigating to templates
+        selectPage(null);
       }
     }
-  }, [selectedPageId, pages, navigate, location.pathname]);
+  }, [selectedPageId, pages, navigate, location.pathname, selectPage]);
 
   // Sync selected page with URL
   useEffect(() => {
