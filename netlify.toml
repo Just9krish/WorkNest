@@ -22,3 +22,8 @@
   command = "vite"
   port = 3000
   publish = "dist"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
