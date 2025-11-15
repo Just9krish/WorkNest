@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { usePages } from "../context/pages-context";
-import { useBlocks } from "../context/blocks-context";
 import BlockEditor from "./BlockEditor";
 import IconPicker from "./IconPicker";
 import { useOnClickOutside } from "../hooks/useOnClickOutside";

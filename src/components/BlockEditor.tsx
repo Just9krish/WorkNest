@@ -28,7 +28,6 @@ const BlockEditor: React.FC<BlockEditorProps> = ({ pageId }) => {
   const [selectedSlashIndex, setSelectedSlashIndex] = useState(0);
   const editorRef = useRef<HTMLDivElement>(null);
   const anchorRef = useRef<HTMLDivElement>(null);
-
   const blocks = getPageBlocks(pageId);
 
   const blockTypes: BlockType[] = [
@@ -234,18 +233,81 @@ const BlockEditor: React.FC<BlockEditorProps> = ({ pageId }) => {
             : blocks.filter(b => !b.parentBlockId);
 
           const blockIndex = allBlocks.findIndex(b => b.$id === blockId);
+
+          // Prevent deletion of the last block - always keep at least one block
+          if (allBlocks.length === 1) {
+            // Don't delete - just clear the content (which is already empty)
+            // Focus the input to allow continued typing
+            requestAnimationFrame(() => {
+              const blockElement = document.getElementById(`block-${blockId}`);
+              if (blockElement) {
+                const input = blockElement.querySelector("input, textarea") as
+                  | HTMLInputElement
+                  | HTMLTextAreaElement
+                  | null;
+                if (input) {
+                  input.focus();
+                  input.setSelectionRange(0, 0);
+                }
+              }
+            });
+            return;
+          }
+
           if (blockIndex > 0) {
+            // There's a previous block - focus it after deletion
             const prevBlock = allBlocks[blockIndex - 1];
             await deleteBlock(blockId);
-            setTimeout(() => {
-              const prevBlockElement = document.getElementById(
-                `block-${prevBlock.$id}`
-              );
-              const input = prevBlockElement?.querySelector(
-                "input, textarea, [contenteditable]"
-              ) as HTMLElement;
-              input?.focus();
-            }, 50);
+            // Use multiple requestAnimationFrame calls and longer timeout for better timing
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                setTimeout(() => {
+                  const prevBlockElement = document.getElementById(
+                    `block-${prevBlock.$id}`
+                  );
+                  if (prevBlockElement) {
+                    // First, try to find the input (might already be in editing mode)
+                    let input = prevBlockElement.querySelector(
+                      "input, textarea"
+                    ) as HTMLInputElement | HTMLTextAreaElement | null;
+
+                    if (!input) {
+                      // Input not found - click on the block container to activate editing mode
+                      // Find the clickable div inside the block
+                      const clickableDiv = prevBlockElement.querySelector(
+                        "div[class*='cursor-text']"
+                      ) as HTMLElement | null;
+                      if (clickableDiv) {
+                        clickableDiv.click();
+                      } else {
+                        // Fallback: click the block container itself
+                        prevBlockElement.click();
+                      }
+
+                      // Wait for React to re-render and show the input
+                      setTimeout(() => {
+                        input = prevBlockElement.querySelector(
+                          "input, textarea"
+                        ) as HTMLInputElement | HTMLTextAreaElement | null;
+                        if (input) {
+                          input.focus();
+                          const length = input.value.length;
+                          input.setSelectionRange(length, length);
+                        }
+                      }, 20);
+                    } else {
+                      // Input already exists - focus it directly
+                      input.focus();
+                      const length = input.value.length;
+                      input.setSelectionRange(length, length);
+                    }
+                  }
+                }, 50);
+              });
+            });
+          } else {
+            // First block but not the only one - delete it
+            await deleteBlock(blockId);
           }
         }
         break;
@@ -299,26 +361,29 @@ const BlockEditor: React.FC<BlockEditorProps> = ({ pageId }) => {
     setShowSlashMenu(false);
   };
 
+  // Ensure there's always at least one block
+  useEffect(() => {
+    if (blocks.length === 0) {
+      addBlock(pageId).catch(err => {
+        console.error("Error creating initial block:", err);
+      });
+    }
+  }, [blocks.length, pageId, addBlock]);
+
   return (
     <div ref={editorRef} className="relative">
       <div className="space-y-2">
-        {blocks.length === 0 ? (
-          <div className="text-muted-foreground text-sm p-4">
-            No blocks found. Creating initial block...
-          </div>
-        ) : (
-          blocks.map(block => {
-            return (
-              <EditableBlock
-                key={block.$id}
-                block={block}
-                onContentChange={handleBlockContentChange}
-                onKeyDown={handleKeyDown}
-                onUpdateBlock={updates => updateBlock(block.$id, updates)}
-              />
-            );
-          })
-        )}
+        {blocks.map(block => {
+          return (
+            <EditableBlock
+              key={block.$id}
+              block={block}
+              onContentChange={handleBlockContentChange}
+              onKeyDown={handleKeyDown}
+              onUpdateBlock={updates => updateBlock(block.$id, updates)}
+            />
+          );
+        })}
       </div>
 
       {slashMenuAnchor && (
