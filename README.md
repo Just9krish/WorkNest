@@ -1,14 +1,19 @@
 # WorkNest
 
-A modern note-taking application built with React, TypeScript, and Supabase.
+A Notion-style project management application for organizing pages, notes, and tasks.
+
+## What is WorkNest?
+
+WorkNest is a web application that lets you create and organize content in a block-based editor. You can create pages, add different types of content blocks, and use templates for calendars and roadmaps.
 
 ## Features
 
-- **Rich Text Editor**: Create and edit text blocks with various formatting options
-- **Templates**: Calendar and Roadmap templates for project management
-- **Real-time Sync**: Automatic saving with Supabase backend
-- **Dark/Light Mode**: Toggle between themes
-- **Responsive Design**: Works on desktop and mobile
+- **Block-based Editor**: Create text, headings, todos, images, code blocks, and more
+- **Pages**: Organize content in nested pages with icons
+- **Templates**: Calendar and Roadmap templates for project planning
+- **Slash Commands**: Type "/" to quickly insert different block types
+- **Dark/Light Mode**: Switch between themes
+- **Auto-save**: Changes are automatically saved
 
 ## Tech Stack
 
@@ -16,7 +21,7 @@ A modern note-taking application built with React, TypeScript, and Supabase.
 - TypeScript
 - Vite
 - Tailwind CSS
-- Supabase
+- Appwrite (backend)
 - shadcn/ui components
 
 ## Getting Started
@@ -27,9 +32,10 @@ npm install
 ```
 
 2. Set up environment variables:
-```bash
-cp .env.example .env
-# Add your Supabase URL and API key
+Create a `.env` file with your Appwrite credentials:
+```
+VITE_APPWRITE_ENDPOINT=your_appwrite_endpoint
+VITE_APPWRITE_PROJECT_ID=your_project_id
 ```
 
 3. Run the development server:
@@ -49,5 +55,3 @@ npm run build
 - `npm run preview` - Preview production build
 - `npm run lint` - Run ESLint
 - `npm run format` - Format code with Prettier
-- `npm run format:check` - Check code formatting
-
